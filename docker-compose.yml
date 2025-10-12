@@ -1,27 +1,22 @@
-version: '3.8'
-
 services:
   directory-server:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
     container_name: directory-browser
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     ports:
       - "5000:5000"
     volumes:
       # Mount the directory you want to browse
-      - /mnt/nassys:/mnt/nassys:ro
-      - /share/systemp:/share/systemp:ro
+      - /share/systemp:/mnt/nassys:ro
       # Mount logs directory for persistence
       - ./logs:/app/logs
       # Optional: mount config file if you have one
       - ./config.ini:/app/config.ini:ro
-    environment:
-      # Set the root path for browsing
-      - DEFAULT_ROOT_PATH=/mnt/nassys
-      # Flask environment
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]

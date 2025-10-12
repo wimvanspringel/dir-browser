@@ -14,30 +14,57 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import logging
 
-# Configure logging based on environment
-flask_env = os.environ.get('FLASK_ENV', 'development').lower()
-if flask_env == 'production':
-    # In production, only log errors and warnings
-    log_level = logging.ERROR
-else:
-    # In development, log everything
-    log_level = logging.INFO
+# Configuration
+DEFAULT_ROOT_PATH = "/mnt/nassys"  # Default root directory to browse
+
+# Set up basic logging first
+import os
+
+# Ensure logs directory exists
+os.makedirs('./logs', exist_ok=True)
+
+# Set up logging with error handling
+handlers = [logging.StreamHandler()]
+
+try:
+    # Try to add file handler
+    handlers.append(logging.FileHandler('./logs/directory_server.log'))
+except (PermissionError, OSError) as e:
+    print(f"Warning: Could not create log file: {e}")
+    print("Logging to console only.")
 
 logging.basicConfig(
-    level=log_level,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('directory_server.log')
-    ]
+    handlers=handlers
 )
 logger = logging.getLogger(__name__)
 
-# Log the environment setting after logger is created
-if flask_env == 'production':
-    logger.info("Production mode: Logging set to ERROR level only")
-else:
-    logger.info("Development mode: Logging set to INFO level")  
+# Get configuration from config.ini if available
+import configparser
+try:
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+except Exception as e:
+    logger.warning(f"Could not read config.ini: {e}")
+
+# Configure logging based on config.ini
+if 'Logging' in config:
+    log_level = config.get('Logging', 'level', fallback='INFO')
+    # Update the logging level if specified in config
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    logging.getLogger().setLevel(numeric_level)
+logger.info(f"Logging set to {log_level} level")
+
+# Get flask debug setting from config.ini
+flask_debug_mode = config.get('Logging', 'flaskdebug', fallback='False').lower() in ('True', 'true', '1', 'yes', 'on')
+logger.info(f"Flask debug mode: {flask_debug_mode}")
+
+if 'Scrape' in config:
+    media_dir = config.get('Scrape', 'media_dir', fallback=DEFAULT_ROOT_PATH)
+    if os.path.exists(media_dir):
+        DEFAULT_ROOT_PATH = media_dir
+logger.info(f"Using media directory: {DEFAULT_ROOT_PATH}")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -81,9 +108,6 @@ def after_request(response):
     
     return response
 
-# Configuration
-DEFAULT_ROOT_PATH = "/mnt/nassys"  # Default root directory to browse
-MAX_DEPTH = 10  # Maximum directory depth to prevent infinite recursion
 
 def get_file_info(file_path):
     """Get detailed information about a file or directory"""
@@ -427,19 +451,7 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    # Get configuration from config.ini if available
-    import configparser
-    try:
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        if 'Scrape' in config:
-            media_dir = config.get('Scrape', 'media_dir', fallback=DEFAULT_ROOT_PATH)
-            if os.path.exists(media_dir):
-                DEFAULT_ROOT_PATH = media_dir
-                logger.info(f"Using media_dir from config: {DEFAULT_ROOT_PATH}")
-    except Exception as e:
-        logger.warning(f"Could not read config.ini: {e}")
-    
+
     # Set server start time for monitoring
     app.start_time = time.time()
     
@@ -448,11 +460,8 @@ if __name__ == '__main__':
     logger.info("  - GET /api/health - Server health check")
     logger.info("  - GET /api/debug/requests - Show active requests")
     
-    # Get debug setting from environment variable
-    debug_mode = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes', 'on')
-    
     try:
-        app.run(host='0.0.0.0', port=5000, debug=debug_mode, threaded=True)
+        app.run(host='0.0.0.0', port=5000, debug=flask_debug_mode, threaded=True)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:

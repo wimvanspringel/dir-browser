@@ -18,13 +18,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY directory_server.py .
 COPY directory_client.html .
 
-# Create directory for logs
-RUN mkdir -p /app/logs
-
-RUN mkdir -p /share
-
 # Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Use ARG to allow passing UID from docker-compose
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN useradd -m -u ${USER_ID} appuser
+
+# Create directory for logs and set proper permissions
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+
 USER appuser
 
 # Expose port
