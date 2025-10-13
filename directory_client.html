@@ -371,12 +371,41 @@
             justify-content: center;
         }
 
+        .slideshow-exit-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10%;
+            cursor: pointer;
+            z-index: 5;
+            transition: background-color 0.2s ease;
+        }
+
+        .slideshow-exit-zone:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .slideshow-exit-zone:active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .slideshow-image-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .slideshow-image {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
             border-radius: 0;
             box-shadow: none;
+            z-index: 1;
         }
 
         .slideshow-controls {
@@ -415,43 +444,30 @@
             text-decoration: none;
         }
 
-        .slideshow-nav-btn {
+        .slideshow-nav-area {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: transparent;
-            color: white;
-            border: none;
-            padding: 15px 10px;
+            top: 0;
+            height: 100%;
+            width: 50%;
             cursor: pointer;
-            font-size: 1.5rem;
-            transition: all 0.2s;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 50px;
-            min-height: 50px;
-            z-index: 10;
+            z-index: 2;
+            transition: background-color 0.2s ease;
         }
 
-        .slideshow-nav-btn:hover {
-            background-color: rgba(0, 0, 0, 0.3);
-            transform: translateY(-50%) scale(1.1);
+        .slideshow-nav-area:hover {
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
-        .slideshow-nav-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: translateY(-50%);
+        .slideshow-nav-area:active {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .slideshow-nav-left {
-            left: 20px;
+            left: 0;
         }
 
         .slideshow-nav-right {
-            right: 20px;
+            right: 0;
         }
 
         .slideshow-info {
@@ -468,6 +484,24 @@
         .slideshow-info:hover {
             color: rgba(255, 255, 255, 0.8);
             text-decoration: underline;
+        }
+
+        .slideshow-bottom-info {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 300;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.8;
         }
 
         .close-slideshow {
@@ -617,20 +651,23 @@
             <!-- Slideshow Modal -->
         <div id="slideshow-modal" class="slideshow-modal">
             <div class="slideshow-content">
-                <span class="close-slideshow" onclick="browser.closeSlideshow()">&times;</span>
-                <button class="slideshow-nav-btn slideshow-nav-left" onclick="browser.previousImage()" id="prev-btn">⏮️</button>
-                <img id="slideshow-image" class="slideshow-image" src="" alt="Slideshow Image">
-                <button class="slideshow-nav-btn slideshow-nav-right" onclick="browser.nextImage()" id="next-btn">⏭️</button>
+                <div class="slideshow-exit-zone" onclick="browser.closeSlideshow()" id="exit-zone"></div>
+                <div class="slideshow-image-container">
+                    <div class="slideshow-nav-area slideshow-nav-left" onclick="browser.previousImage()" id="prev-area"></div>
+                    <img id="slideshow-image" class="slideshow-image" src="" alt="Slideshow Image">
+                    <div class="slideshow-nav-area slideshow-nav-right" onclick="browser.nextImage()" id="next-area"></div>
+                </div>
                 <div class="slideshow-controls">
                     <div class="slideshow-info" id="slideshow-info" onclick="browser.toggleControls()">0 / 0</div>
                 </div>
+                <div class="slideshow-bottom-info" id="slideshow-bottom-info">0 / 0</div>
             </div>
         </div>
 
     <script>
         class DirectoryBrowser {
             constructor() {
-                this.currentPath = '/mnt/nassys/$SystemRestore/$bin/temp/SystemCache';
+                this.currentPath = '/mnt/nassys';
                 this.apiBase = '/api';
                 this.slideshowImages = [];
                 this.currentImageIndex = 0;
@@ -646,6 +683,7 @@
                 this.currentHistoryIndex = -1;
                 this.scrollPositions = new Map();
                 this.clickedItems = new Map(); // Track clicked items per directory
+                this.slideshowStates = new Map(); // Track slideshow state per directory
                 
                 this.init();
             }
@@ -682,9 +720,10 @@
 
             async loadDirectory(path, isBackNavigation = false) {
                 try {
-                    // Save current scroll position before navigating
+                    // Save current state before navigating
                     if (this.currentPath && !isBackNavigation) {
                         this.saveScrollPosition(this.currentPath);
+                        this.saveSlideshowState(this.currentPath);
                     }
                     
                     this.showLoading();
@@ -889,6 +928,25 @@
                 }
             }
 
+            saveSlideshowState(directoryPath) {
+                if (this.slideshowImages.length > 0) {
+                    this.slideshowStates.set(directoryPath, {
+                        images: [...this.slideshowImages],
+                        currentIndex: this.currentImageIndex
+                    });
+                }
+            }
+
+            restoreSlideshowState(directoryPath) {
+                const savedState = this.slideshowStates.get(directoryPath);
+                if (savedState) {
+                    this.slideshowImages = [...savedState.images];
+                    this.currentImageIndex = savedState.currentIndex;
+                    return true;
+                }
+                return false;
+            }
+
             clearHighlights() {
                 const fileItems = document.querySelectorAll('.file-item');
                 fileItems.forEach(item => {
@@ -1046,6 +1104,14 @@
                     slideshowBtn.disabled = true;
                     slideshowBtn.textContent = '🖼️ Loading...';
                     
+                    // Try to restore previous slideshow state for this directory
+                    if (this.restoreSlideshowState(this.currentPath)) {
+                        this.showSlideshow();
+                        slideshowBtn.disabled = false;
+                        slideshowBtn.textContent = '🖼️ Slideshow';
+                        return;
+                    }
+                    
                     const response = await fetch(`${this.apiBase}/slideshow?path=${encodeURIComponent(this.currentPath)}`);
                     
                     if (!response.ok) {
@@ -1100,6 +1166,8 @@
                         this.currentImageIndex = 0;
                     }
                     
+                    // Save the new state
+                    this.saveSlideshowState(this.currentPath);
                     this.showSlideshow();
                     
                 } catch (error) {
@@ -1116,6 +1184,9 @@
             }
 
             closeSlideshow() {
+                // Save current slideshow state before closing
+                this.saveSlideshowState(this.currentPath);
+                
                 const modal = document.getElementById('slideshow-modal');
                 modal.style.display = 'none';
                 this.hideControls();
@@ -1154,20 +1225,31 @@
                 const image = this.slideshowImages[this.currentImageIndex];
                 const imageElement = document.getElementById('slideshow-image');
                 const infoElement = document.getElementById('slideshow-info');
-                const prevBtn = document.getElementById('prev-btn');
-                const nextBtn = document.getElementById('next-btn');
+                const bottomInfoElement = document.getElementById('slideshow-bottom-info');
+                const prevArea = document.getElementById('prev-area');
+                const nextArea = document.getElementById('next-area');
                 
                 // Set image source - get relative path from current directory
                 const currentDir = this.currentPath;
                 const relativePath = image.path.replace(currentDir + '/', '');
                 imageElement.src = `${this.apiBase}/image/${encodeURIComponent(relativePath)}?dir=${encodeURIComponent(currentDir)}`;
                 
-                // Update info
-                infoElement.textContent = `${this.currentImageIndex + 1} / ${this.slideshowImages.length}`;
+                // Update info in both locations
+                const infoText = `${this.currentImageIndex + 1} / ${this.slideshowImages.length}`;
+                infoElement.textContent = infoText;
+                if (bottomInfoElement) {
+                    bottomInfoElement.textContent = infoText;
+                }
                 
-                // Update button states
-                prevBtn.disabled = this.currentImageIndex === 0;
-                nextBtn.disabled = this.currentImageIndex === this.slideshowImages.length - 1;
+                // Update clickable area states (visual feedback)
+                if (prevArea) {
+                    prevArea.style.opacity = this.currentImageIndex === 0 ? '0.3' : '1';
+                    prevArea.style.cursor = this.currentImageIndex === 0 ? 'not-allowed' : 'pointer';
+                }
+                if (nextArea) {
+                    nextArea.style.opacity = this.currentImageIndex === this.slideshowImages.length - 1 ? '0.3' : '1';
+                    nextArea.style.cursor = this.currentImageIndex === this.slideshowImages.length - 1 ? 'not-allowed' : 'pointer';
+                }
                 
                 // Show controls when navigating
                 this.showControls();
@@ -1177,6 +1259,8 @@
                 if (this.currentImageIndex < this.slideshowImages.length - 1) {
                     this.currentImageIndex++;
                     this.displayCurrentImage();
+                    // Save state after navigation
+                    this.saveSlideshowState(this.currentPath);
                 }
             }
 
@@ -1184,6 +1268,8 @@
                 if (this.currentImageIndex > 0) {
                     this.currentImageIndex--;
                     this.displayCurrentImage();
+                    // Save state after navigation
+                    this.saveSlideshowState(this.currentPath);
                 }
             }
 
