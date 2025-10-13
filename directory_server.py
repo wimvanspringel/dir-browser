@@ -69,6 +69,11 @@ logger.info(f"Using media directory: {DEFAULT_ROOT_PATH}")
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+# Suppress Werkzeug request logs
+import logging
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+
 # Performance monitoring
 request_times = {}
 active_requests = set()
