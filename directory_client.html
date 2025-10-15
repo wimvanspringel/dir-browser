@@ -66,14 +66,12 @@
             cursor: pointer;
             padding: 1px 4px;
             border-radius: 3px;
-            transition: background-color 0.2s;
+            transition: background-color 0.1s ease;
         }
 
         .breadcrumb-item:hover {
             background-color: #2d3748;
             color: #e2e8f0;
-            transform: translateY(-1px);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         }
 
         .breadcrumb-separator {
@@ -161,15 +159,13 @@
             border-radius: 2px;
             margin-bottom: 1px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background-color 0.1s ease, border-color 0.1s ease;
             border: 1px solid transparent;
         }
 
         .file-item:hover {
             background-color: #2d3748;
             border-color: #4a5568;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .file-item.highlighted {
@@ -278,7 +274,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: background-color 0.2s;
+            transition: background-color 0.1s ease;
         }
 
         .refresh-btn:hover {
@@ -298,7 +294,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: background-color 0.2s;
+            transition: background-color 0.1s ease;
             margin-left: 10px;
         }
 
@@ -319,7 +315,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: background-color 0.2s;
+            transition: background-color 0.1s ease;
             margin-left: auto;
         }
 
@@ -328,6 +324,164 @@
         }
 
         .back-btn:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .sort-btn {
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.1s ease;
+            margin-left: 5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sort-btn:hover {
+            background-color: #2d3748;
+        }
+
+        .sort-btn.active {
+            background-color: #667eea;
+        }
+
+        .sort-btn.active:hover {
+            background-color: #5a67d8;
+        }
+
+        .sort-icon {
+            font-size: 0.7rem;
+            transition: transform 0.1s ease;
+        }
+
+        .sort-icon.desc {
+            transform: rotate(180deg);
+        }
+
+        .favorites-panel {
+            background: rgba(26, 32, 44, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-top: 8px;
+            display: none;
+        }
+
+        .favorites-panel.show {
+            display: block;
+        }
+
+        .favorites-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .favorites-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .favorites-count {
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+
+        .favorites-list {
+            max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #4a5568 #2d3748;
+        }
+
+        .favorites-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .favorites-list::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 3px;
+        }
+
+        .favorites-list::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 3px;
+        }
+
+        .favorite-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: background-color 0.1s ease;
+        }
+
+        .favorite-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .favorite-icon {
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            font-size: 0.6rem;
+        }
+
+        .favorite-name {
+            flex: 1;
+            font-size: 0.75rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .favorite-remove {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+            transition: background-color 0.1s ease;
+        }
+
+        .favorite-remove:hover {
+            background: rgba(229, 62, 62, 0.2);
+        }
+
+        .download-btn {
+            background-color: #38a169;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.1s ease;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .download-btn:hover {
+            background-color: #2f855a;
+        }
+
+        .download-btn:disabled {
             background-color: #a0aec0;
             cursor: not-allowed;
         }
@@ -376,9 +530,43 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 10%;
+            height: 20%;
             cursor: pointer;
             z-index: 5;
+        }
+
+        .slideshow-favorite-zone {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            cursor: pointer;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .slideshow-favorite-zone:hover {
+            opacity: 1;
+        }
+
+        .slideshow-favorite-zone.show {
+            opacity: 1;
+        }
+
+        .favorite-indicator {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .slideshow-image-container {
@@ -418,7 +606,7 @@
             padding: 4px 8px;
             cursor: pointer;
             font-size: 0.8rem;
-            transition: all 0.2s;
+            transition: color 0.1s ease;
             min-width: 24px;
             line-height: 1;
             text-decoration: none;
@@ -426,7 +614,6 @@
 
         .slideshow-btn-control:hover {
             color: rgba(255, 255, 255, 0.8);
-            text-decoration: underline;
         }
 
         .slideshow-btn-control:disabled {
@@ -460,12 +647,11 @@
             font-weight: 400;
             line-height: 1;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: color 0.1s ease;
         }
 
         .slideshow-info:hover {
             color: rgba(255, 255, 255, 0.8);
-            text-decoration: underline;
         }
 
         .slideshow-bottom-info {
@@ -589,6 +775,61 @@
                 font-size: 0.75rem;
             }
         }
+
+        /* Kiosk display optimizations - reduce flash effects */
+        @media (pointer: coarse) {
+            /* Touch devices - disable hover effects that cause flashing */
+            .file-item:hover {
+                background-color: transparent;
+                border-color: transparent;
+            }
+            
+            .breadcrumb-item:hover {
+                background-color: transparent;
+                color: #667eea;
+            }
+            
+            .refresh-btn:hover,
+            .slideshow-btn:hover,
+            .back-btn:hover {
+                background-color: inherit;
+            }
+            
+            .slideshow-btn-control:hover,
+            .slideshow-info:hover {
+                color: inherit;
+            }
+        }
+
+        /* Prevent flash on touch/tap */
+        .file-item,
+        .breadcrumb-item,
+        .refresh-btn,
+        .slideshow-btn,
+        .back-btn,
+        .slideshow-btn-control,
+        .slideshow-info {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Optimize for kiosk mode - reduce animations */
+        @media (prefers-reduced-motion: reduce) {
+            .file-item,
+            .breadcrumb-item,
+            .refresh-btn,
+            .slideshow-btn,
+            .back-btn,
+            .slideshow-btn-control,
+            .slideshow-info {
+                transition: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -596,7 +837,7 @@
         <div class="header">
             <h1>📁 Directory Browser</h1>
             <div class="breadcrumb" id="breadcrumb">
-                <span class="breadcrumb-item" onclick="navigateToPath('/mnt/nassys/$SystemRestore/$bin/temp/SystemCache')">SystemCache</span>
+                <span class="breadcrumb-item">Loading...</span>
             </div>
         </div>
 
@@ -607,6 +848,12 @@
                         <div class="panel-title">📂 Directory Contents</div>
                     </div>
                     <div>
+                        <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn">
+                            📄 Name <span class="sort-icon" id="sort-name-icon">▲</span>
+                        </button>
+                        <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn">
+                            📅 Date <span class="sort-icon" id="sort-date-icon">▲</span>
+                        </button>
                         <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn">
                             🖼️ Slideshow
                         </button>
@@ -616,6 +863,9 @@
                         <button class="back-btn" onclick="browser.goBack()" id="back-btn" disabled>
                             ⬅️ Back
                         </button>
+                        <button class="sort-btn" onclick="browser.toggleFavoritesPanel()" id="favorites-toggle-btn">
+                            ⭐ Favorites
+                        </button>
                     </div>
                 </div>
                 <div class="file-list" id="file-list">
@@ -623,6 +873,20 @@
                         <div class="spinner"></div>
                         Loading directory contents...
                     </div>
+                </div>
+                
+                <!-- Favorites Panel -->
+                <div class="favorites-panel" id="favorites-panel">
+                    <div class="favorites-header">
+                        <div class="favorites-title">⭐ Favorites</div>
+                        <div class="favorites-count" id="favorites-count">0 files</div>
+                    </div>
+                    <div class="favorites-list" id="favorites-list">
+                        <!-- Favorites will be populated here -->
+                    </div>
+                    <button class="download-btn" onclick="browser.downloadFavorites()" id="download-btn" disabled>
+                        📥 Download Favorites
+                    </button>
                 </div>
             </div>
 
@@ -639,6 +903,9 @@
                     <img id="slideshow-image" class="slideshow-image" src="" alt="Slideshow Image">
                     <div class="slideshow-nav-area slideshow-nav-right" onclick="browser.nextImage()" id="next-area"></div>
                 </div>
+                <div class="slideshow-favorite-zone" onclick="browser.toggleFavorite()" id="favorite-zone">
+                    <div class="favorite-indicator" id="favorite-indicator">Click to add to favorites</div>
+                </div>
                 <div class="slideshow-controls">
                     <div class="slideshow-info" id="slideshow-info" onclick="browser.toggleControls()">0 / 0</div>
                 </div>
@@ -649,7 +916,8 @@
     <script>
         class DirectoryBrowser {
             constructor() {
-                this.currentPath = '/mnt/nassys';
+                this.currentPath = ''; // Will be set when we get the server root
+                this.serverRoot = ''; // Will be updated when we get the actual root from server
                 this.apiBase = '/api';
                 this.slideshowImages = [];
                 this.currentImageIndex = 0;
@@ -667,6 +935,18 @@
                 this.clickedItems = new Map(); // Track clicked items per directory
                 this.slideshowStates = new Map(); // Track slideshow state per directory
                 
+                // Sort state tracking
+                this.currentSort = 'date'; // 'name' or 'date'
+                this.sortAscending = false; // true for ascending, false for descending (newest first by default)
+                this.directoryContents = []; // Store current directory contents for sorting
+                
+                // Last viewed file tracking
+                this.lastViewedFile = null; // Track the last file that was viewed/opened
+                
+                // Favorites tracking
+                this.favorites = new Set(); // Set of favorite file paths
+                this.favoritesPanelVisible = false;
+                
                 this.init();
             }
 
@@ -674,15 +954,44 @@
                 // Set up browser back button support
                 this.setupBrowserBackButton();
                 
+                // First, load the server root to get the correct root path
+                await this.loadServerRoot();
+                
                 // Check if there's a path in the URL on initial load
                 const urlParams = new URLSearchParams(window.location.search);
                 const pathParam = urlParams.get('path');
                 if (pathParam) {
                     this.currentPath = decodeURIComponent(pathParam);
+                } else {
+                    this.currentPath = this.serverRoot;
                 }
                 
                 await this.loadDirectory(this.currentPath);
                 this.updateBackButton();
+            }
+
+            async loadServerRoot() {
+                try {
+                    // Make a request to get the server root without specifying a path
+                    const response = await fetch(`${this.apiBase}/directory`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    this.serverRoot = data.root_path;
+                    this.currentPath = data.path;
+                    
+                    // Update the initial breadcrumb
+                    this.updateBreadcrumb(data.path, data.parent);
+                    
+                } catch (error) {
+                    console.error('Failed to load server root:', error);
+                    // Fallback to a default path if server root can't be determined
+                    this.serverRoot = '/mnt/nasdata/pictures';
+                    this.currentPath = this.serverRoot;
+                }
             }
 
             setupBrowserBackButton() {
@@ -717,6 +1026,12 @@
 
                     const data = await response.json();
                     this.currentPath = data.path;
+                    
+                    // Update server root if provided by the server
+                    if (data.root_path) {
+                        this.serverRoot = data.root_path;
+                    }
+                    
                     this.displayDirectory(data);
                     this.updateBreadcrumb(data.path, data.parent);
                     
@@ -752,14 +1067,32 @@
                 
                 if (data.contents.length === 0) {
                     fileList.innerHTML = '<div class="loading">Directory is empty</div>';
+                    this.directoryContents = [];
                     return;
                 }
 
-                const html = data.contents.map(item => this.createFileItem(item)).join('');
+                // Store directory contents for sorting
+                this.directoryContents = data.contents;
+                
+                // Apply current sort
+                const sortedContents = this.applySorting(this.directoryContents);
+                
+                const html = sortedContents.map(item => this.createFileItem(item)).join('');
                 fileList.innerHTML = html;
                 
-                // Restore clicked item highlight after content is loaded
-                this.restoreClickedItemHighlight(data.path);
+                // Update sort button states
+                setTimeout(() => {
+                    this.updateSortButtons();
+                }, 50);
+                
+                // Try to select the last viewed file first, then fall back to clicked item
+                setTimeout(() => {
+                    this.selectLastViewedFile();
+                    // If no last viewed file was selected, restore clicked item highlight
+                    if (!this.lastViewedFile || !this.directoryContents.some(item => item.path === this.lastViewedFile)) {
+                        this.restoreClickedItemHighlight(data.path);
+                    }
+                }, 100);
             }
 
             createFileItem(item) {
@@ -810,11 +1143,23 @@
 
             updateBreadcrumb(currentPath, parentPath) {
                 const breadcrumb = document.getElementById('breadcrumb');
-                const pathParts = currentPath.split('/').filter(part => part);
                 
-                let html = '<span class="breadcrumb-item" onclick="browser.navigateToPath(\'/mnt/nassys/$SystemRestore/$bin/temp/SystemCache\')">SystemCache</span>';
-                let currentPathBuilder = '';
+                // If we're at the server root, just show the root name
+                if (currentPath === this.serverRoot) {
+                    const rootName = this.serverRoot.split('/').pop() || 'Root';
+                    breadcrumb.innerHTML = `<span class="breadcrumb-item" onclick="browser.navigateToPath('${this.serverRoot}')">${this.escapeHtml(rootName)}</span>`;
+                    return;
+                }
                 
+                // Get path parts relative to server root
+                const relativePath = currentPath.replace(this.serverRoot, '').replace(/^\/+/, '');
+                const pathParts = relativePath.split('/').filter(part => part);
+                
+                // Start with the server root
+                let html = `<span class="breadcrumb-item" onclick="browser.navigateToPath('${this.serverRoot}')">${this.escapeHtml(this.serverRoot.split('/').pop() || 'Root')}</span>`;
+                let currentPathBuilder = this.serverRoot;
+                
+                // Add each directory level
                 pathParts.forEach((part, index) => {
                     currentPathBuilder += '/' + part;
                     html += '<span class="breadcrumb-separator">/</span>';
@@ -936,6 +1281,289 @@
                 });
             }
 
+            toggleSort(sortType) {
+                if (this.currentSort === sortType) {
+                    // Toggle direction if same sort type
+                    this.sortAscending = !this.sortAscending;
+                } else {
+                    // Switch to new sort type, default to ascending
+                    this.currentSort = sortType;
+                    this.sortAscending = true;
+                }
+                
+                // Re-display directory with new sort
+                this.redisplayDirectory();
+            }
+
+            applySorting(contents) {
+                const sorted = [...contents];
+                
+                sorted.sort((a, b) => {
+                    let comparison = 0;
+                    
+                    if (this.currentSort === 'name') {
+                        // Sort by name (case insensitive)
+                        comparison = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                    } else if (this.currentSort === 'date') {
+                        // Sort by modification date
+                        const dateA = new Date(a.modified);
+                        const dateB = new Date(b.modified);
+                        comparison = dateA - dateB;
+                    }
+                    
+                    // Apply direction
+                    return this.sortAscending ? comparison : -comparison;
+                });
+                
+                return sorted;
+            }
+
+            redisplayDirectory() {
+                if (this.directoryContents.length === 0) {
+                    return;
+                }
+                
+                const fileList = document.getElementById('file-list');
+                const sortedContents = this.applySorting(this.directoryContents);
+                
+                const html = sortedContents.map(item => this.createFileItem(item)).join('');
+                fileList.innerHTML = html;
+                
+                // Update sort button states
+                this.updateSortButtons();
+                
+                // Restore clicked item highlight
+                this.restoreClickedItemHighlight(this.currentPath);
+            }
+
+            updateSortButtons() {
+                console.log('updateSortButtons called - currentSort:', this.currentSort, 'sortAscending:', this.sortAscending);
+                
+                // Update name sort button
+                const nameBtn = document.getElementById('sort-name-btn');
+                const nameIcon = document.getElementById('sort-name-icon');
+                
+                if (!nameBtn || !nameIcon) {
+                    console.log('Name button elements not found');
+                    return;
+                }
+                
+                if (this.currentSort === 'name') {
+                    nameBtn.classList.add('active');
+                    nameIcon.textContent = this.sortAscending ? '▲' : '▼';
+                    nameIcon.classList.toggle('desc', !this.sortAscending);
+                    console.log('Name button set to active, arrow:', nameIcon.textContent);
+                } else {
+                    nameBtn.classList.remove('active');
+                    nameIcon.textContent = '▲';
+                    nameIcon.classList.remove('desc');
+                }
+                
+                // Update date sort button
+                const dateBtn = document.getElementById('sort-date-btn');
+                const dateIcon = document.getElementById('sort-date-icon');
+                
+                if (!dateBtn || !dateIcon) {
+                    console.log('Date button elements not found');
+                    return;
+                }
+                
+                if (this.currentSort === 'date') {
+                    dateBtn.classList.add('active');
+                    dateIcon.textContent = this.sortAscending ? '▲' : '▼';
+                    dateIcon.classList.toggle('desc', !this.sortAscending);
+                    console.log('Date button set to active, arrow:', dateIcon.textContent);
+                } else {
+                    dateBtn.classList.remove('active');
+                    dateIcon.textContent = '▲';
+                    dateIcon.classList.remove('desc');
+                }
+            }
+
+            selectFileInList(filePath) {
+                // Clear any existing selections
+                this.clearHighlights();
+                
+                // Find and highlight the file in the current directory
+                const fileItems = document.querySelectorAll('.file-item');
+                fileItems.forEach(item => {
+                    const itemPath = item.getAttribute('data-path');
+                    if (itemPath === filePath) {
+                        item.classList.add('highlighted');
+                        
+                        // Scroll the file into view
+                        item.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    }
+                });
+                
+                // Also save as clicked item for this directory
+                this.saveClickedItem(this.currentPath, filePath);
+            }
+
+            selectLastViewedFile() {
+                if (this.lastViewedFile) {
+                    // Check if the last viewed file is in the current directory
+                    const fileName = this.lastViewedFile.split('/').pop();
+                    const currentDirFiles = this.directoryContents.filter(item => 
+                        item.name === fileName && item.path === this.lastViewedFile
+                    );
+                    
+                    if (currentDirFiles.length > 0) {
+                        this.selectFileInList(this.lastViewedFile);
+                    }
+                }
+            }
+
+            toggleFavorite() {
+                if (this.slideshowImages.length === 0 || this.currentImageIndex < 0) {
+                    return;
+                }
+                
+                const currentImage = this.slideshowImages[this.currentImageIndex];
+                const filePath = currentImage.path;
+                
+                if (this.favorites.has(filePath)) {
+                    this.removeFavorite(filePath);
+                } else {
+                    this.addFavorite(filePath);
+                }
+                
+                this.updateFavoriteIndicator();
+            }
+
+            addFavorite(filePath) {
+                this.favorites.add(filePath);
+                this.updateFavoritesPanel();
+                this.showFavoriteFeedback('Added to favorites!');
+            }
+
+            removeFavorite(filePath) {
+                this.favorites.delete(filePath);
+                this.updateFavoritesPanel();
+                this.showFavoriteFeedback('Removed from favorites');
+            }
+
+            showFavoriteFeedback(message) {
+                const indicator = document.getElementById('favorite-indicator');
+                const originalText = indicator.textContent;
+                indicator.textContent = message;
+                indicator.style.background = 'rgba(56, 161, 105, 0.9)';
+                indicator.style.color = 'white';
+                
+                setTimeout(() => {
+                    indicator.textContent = originalText;
+                    indicator.style.background = 'rgba(255, 255, 255, 0.9)';
+                    indicator.style.color = '#333';
+                }, 2000);
+            }
+
+            updateFavoriteIndicator() {
+                const indicator = document.getElementById('favorite-indicator');
+                if (this.slideshowImages.length === 0 || this.currentImageIndex < 0) {
+                    indicator.textContent = 'Click to add to favorites';
+                    return;
+                }
+                
+                const currentImage = this.slideshowImages[this.currentImageIndex];
+                const filePath = currentImage.path;
+                
+                if (this.favorites.has(filePath)) {
+                    indicator.textContent = '⭐ In favorites - Click to remove';
+                } else {
+                    indicator.textContent = 'Click to add to favorites';
+                }
+            }
+
+            updateFavoritesPanel() {
+                const panel = document.getElementById('favorites-panel');
+                const count = document.getElementById('favorites-count');
+                const list = document.getElementById('favorites-list');
+                const downloadBtn = document.getElementById('download-btn');
+                
+                count.textContent = `${this.favorites.size} files`;
+                downloadBtn.disabled = this.favorites.size === 0;
+                
+                // Clear existing list
+                list.innerHTML = '';
+                
+                // Add favorite items
+                this.favorites.forEach(filePath => {
+                    const fileName = filePath.split('/').pop();
+                    const fileInfo = this.directoryContents.find(item => item.path === filePath);
+                    const icon = fileInfo ? this.getFileIcon(fileInfo.type, filePath) : '📄';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'favorite-item';
+                    item.innerHTML = `
+                        <div class="favorite-icon">${icon}</div>
+                        <div class="favorite-name" title="${fileName}">${fileName}</div>
+                        <button class="favorite-remove" onclick="browser.removeFavorite('${filePath}')">✕</button>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            toggleFavoritesPanel() {
+                this.favoritesPanelVisible = !this.favoritesPanelVisible;
+                const panel = document.getElementById('favorites-panel');
+                
+                if (this.favoritesPanelVisible) {
+                    panel.classList.add('show');
+                    this.updateFavoritesPanel();
+                } else {
+                    panel.classList.remove('show');
+                }
+            }
+
+            async downloadFavorites() {
+                if (this.favorites.size === 0) {
+                    return;
+                }
+                
+                const downloadBtn = document.getElementById('download-btn');
+                const originalText = downloadBtn.textContent;
+                downloadBtn.disabled = true;
+                downloadBtn.textContent = '📥 Preparing download...';
+                
+                try {
+                    // Create a ZIP file with all favorites
+                    const response = await fetch('/api/download-favorites', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            files: Array.from(this.favorites)
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Download failed: ${response.statusText}`);
+                    }
+                    
+                    // Create download link
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `favorites-${new Date().toISOString().split('T')[0]}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                } catch (error) {
+                    console.error('Download error:', error);
+                    alert(`Download failed: ${error.message}`);
+                } finally {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = originalText;
+                }
+            }
+
 
 
 
@@ -964,8 +1592,10 @@
                 if (type === 'directory') {
                     this.navigateToPath(path);
                 } else if (this.isVideoFile(path)) {
+                    this.lastViewedFile = path; // Track last viewed file
                     this.playVideo(path);
                 } else if (this.isImageFile(path)) {
+                    this.lastViewedFile = path; // Track last viewed file
                     this.startSlideshowFromImage(path);
                 }
                 // File viewing functionality removed
@@ -1035,6 +1665,8 @@
                 `;
                 closeBtn.onclick = () => {
                     document.body.removeChild(modal);
+                    // Select the video file in the file list when exiting
+                    this.selectFileInList(path);
                 };
                 
                 const title = document.createElement('div');
@@ -1058,6 +1690,8 @@
                     if (e.key === 'Escape') {
                         document.body.removeChild(modal);
                         document.removeEventListener('keydown', handleEscape);
+                        // Select the video file in the file list when exiting
+                        this.selectFileInList(path);
                     }
                 };
                 document.addEventListener('keydown', handleEscape);
@@ -1169,6 +1803,12 @@
                 // Save current slideshow state before closing
                 this.saveSlideshowState(this.currentPath);
                 
+                // Select the current image file in the file list
+                if (this.slideshowImages.length > 0 && this.currentImageIndex >= 0) {
+                    const currentImage = this.slideshowImages[this.currentImageIndex];
+                    this.selectFileInList(currentImage.path);
+                }
+                
                 const modal = document.getElementById('slideshow-modal');
                 modal.style.display = 'none';
                 this.hideControls();
@@ -1235,6 +1875,9 @@
                 
                 // Show controls when navigating
                 this.showControls();
+                
+                // Update favorite indicator
+                this.updateFavoriteIndicator();
             }
 
             nextImage() {
@@ -1335,6 +1978,11 @@
         let browser;
         document.addEventListener('DOMContentLoaded', () => {
             browser = new DirectoryBrowser();
+            
+            // Set initial sort button states after DOM is ready
+            setTimeout(() => {
+                browser.updateSortButtons();
+            }, 100);
             
             // Add keyboard navigation for slideshow
             document.addEventListener('keydown', (event) => {

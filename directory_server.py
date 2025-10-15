@@ -9,8 +9,10 @@ import json
 import stat
 import time
 import threading
+import zipfile
+import tempfile
 from datetime import datetime
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
 import logging
 
@@ -168,8 +170,13 @@ def get_directory_contents():
         # Get path parameter, default to root
         path = request.args.get('path', DEFAULT_ROOT_PATH)
         
+        # Debug logging
+        logger.info(f"Directory request - Requested path: {path}, Server root: {DEFAULT_ROOT_PATH}")
+        logger.info(f"Path exists: {os.path.exists(path)}, Is directory: {os.path.isdir(path) if os.path.exists(path) else 'N/A'}")
+        
         # Security check - ensure path is within allowed directory
         if not is_safe_path(DEFAULT_ROOT_PATH, path):
+            logger.warning(f"Security check failed - Requested: {path}, Allowed root: {DEFAULT_ROOT_PATH}")
             return jsonify({"error": "Access denied: Path outside allowed directory"}), 403
         
         # Check if path exists and is a directory
@@ -199,6 +206,7 @@ def get_directory_contents():
         return jsonify({
             "path": path,
             "parent": os.path.dirname(path) if path != DEFAULT_ROOT_PATH else None,
+            "root_path": DEFAULT_ROOT_PATH,
             "contents": contents,
             "total_items": len(contents)
         })
@@ -445,6 +453,62 @@ def serve_video():
         
     except Exception as e:
         logger.error(f"Error serving video: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found"}), 404
+
+@app.route('/api/download-favorites', methods=['POST'])
+def download_favorites():
+    """Download multiple files as a ZIP archive"""
+    try:
+        data = request.get_json()
+        if not data or 'files' not in data:
+            return jsonify({"error": "Files list required"}), 400
+        
+        files = data['files']
+        if not isinstance(files, list) or len(files) == 0:
+            return jsonify({"error": "At least one file required"}), 400
+        
+        # Security check - ensure all files are within allowed directory
+        for file_path in files:
+            if not is_safe_path(DEFAULT_ROOT_PATH, file_path):
+                logger.warning(f"Access denied for file in favorites download: {file_path}")
+                return jsonify({"error": "Access denied: File outside allowed directory"}), 403
+        
+        # Create temporary ZIP file
+        temp_fd, temp_path = tempfile.mkstemp(suffix='.zip')
+        os.close(temp_fd)
+        
+        try:
+            with zipfile.ZipFile(temp_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for file_path in files:
+                    if os.path.exists(file_path) and os.path.isfile(file_path):
+                        # Get relative path from server root
+                        rel_path = os.path.relpath(file_path, DEFAULT_ROOT_PATH)
+                        zip_file.write(file_path, rel_path)
+                        logger.info(f"Added to ZIP: {rel_path}")
+                    else:
+                        logger.warning(f"File not found or not accessible: {file_path}")
+            
+            # Send the ZIP file
+            return send_file(
+                temp_path,
+                as_attachment=True,
+                download_name=f'favorites-{datetime.now().strftime("%Y%m%d-%H%M%S")}.zip',
+                mimetype='application/zip'
+            )
+            
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+                
+    except Exception as e:
+        logger.error(f"Error in download_favorites: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 @app.errorhandler(404)
