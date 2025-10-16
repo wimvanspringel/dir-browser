@@ -12,7 +12,7 @@ services:
       - "5000:5000"
     volumes:
       # Mount the directory you want to browse
-      - /share/systemp:/mnt/nassys:ro
+      - /share/data:/mnt/nasdata:ro
       # Mount logs directory for persistence
       - ./logs:/app/logs
       # Optional: mount config file if you have one

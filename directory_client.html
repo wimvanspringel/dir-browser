@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Directory Browser</title>
     <style>
         * {
@@ -15,7 +15,6 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden;
         }
 
         body {
@@ -28,10 +27,9 @@
             max-width: 100%;
             margin: 0 auto;
             padding: 10px;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         .header {
@@ -45,6 +43,22 @@
             position: sticky;
             top: 0;
             z-index: 10;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .header h1 {
@@ -83,8 +97,6 @@
             grid-template-columns: 1fr;
             gap: 8px;
             flex: 1;
-            min-height: 0;
-            overflow: hidden;
         }
 
         .directory-panel {
@@ -95,8 +107,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            overflow: hidden;
+            min-height: 0;
         }
 
         .panel-header {
@@ -371,17 +382,25 @@
         }
 
         .favorites-panel {
-            background: rgba(26, 32, 44, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
-            padding: 8px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 32, 44, 0.98);
+            backdrop-filter: blur(15px);
+            padding: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            margin-top: 8px;
-            display: none;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            max-height: 50vh;
+            overflow: hidden;
         }
 
         .favorites-panel.show {
-            display: block;
+            transform: translateY(0);
         }
 
         .favorites-header {
@@ -391,6 +410,23 @@
             margin-bottom: 8px;
             padding-bottom: 6px;
             border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .favorites-close {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .favorites-close:hover {
+            color: #e2e8f0;
+            background-color: #2d3748;
         }
 
         .favorites-title {
@@ -405,10 +441,11 @@
         }
 
         .favorites-list {
-            max-height: 200px;
+            flex: 1;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #4a5568 #2d3748;
+            min-height: 0;
         }
 
         .favorites-list::-webkit-scrollbar {
@@ -499,7 +536,8 @@
             left: 0;
             top: 0;
             width: 100%;
-            height: 100%;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile browsers */
             background-color: rgba(0, 0, 0, 0.95);
             cursor: none;
         }
@@ -718,6 +756,27 @@
                 font-size: 1.5rem;
             }
             
+            .header-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .header-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .favorites-panel {
+                max-height: 60vh;
+                padding: 10px;
+            }
+            
+            .favorites-close {
+                font-size: 1rem;
+                padding: 2px;
+            }
+            
             .directory-panel {
                 padding: 5px;
             }
@@ -786,24 +845,32 @@
         @media (pointer: coarse) {
             /* Touch devices - disable hover effects that cause flashing */
             .file-item:hover {
-                background-color: transparent;
-                border-color: transparent;
+                background-color: transparent !important;
+                border-color: transparent !important;
             }
             
             .breadcrumb-item:hover {
-                background-color: transparent;
-                color: #667eea;
+                background-color: transparent !important;
+                color: #667eea !important;
             }
             
             .refresh-btn:hover,
             .slideshow-btn:hover,
             .back-btn:hover {
-                background-color: inherit;
+                background-color: inherit !important;
             }
             
             .slideshow-btn-control:hover,
             .slideshow-info:hover {
-                color: inherit;
+                color: inherit !important;
+            }
+            
+            /* Disable all transitions on touch devices */
+            * {
+                transition: none !important;
+                -webkit-transition: none !important;
+                -moz-transition: none !important;
+                -o-transition: none !important;
             }
         }
 
@@ -836,6 +903,78 @@
                 transition: none;
             }
         }
+        
+        /* Additional touch device optimizations for slideshow */
+        @media (pointer: coarse) {
+            .slideshow-nav-area {
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            .slideshow-btn-control {
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            .slideshow-image {
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            /* Slideshow modal - normal viewport approach */
+            .slideshow-modal {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                overflow: hidden !important;
+                z-index: 1000 !important;
+            }
+            
+            .slideshow-content {
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            .slideshow-image-container {
+                flex: 1 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .slideshow-image {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -845,6 +984,28 @@
             <div class="breadcrumb" id="breadcrumb">
                 <span class="breadcrumb-item">Loading...</span>
             </div>
+            <div class="header-controls">
+                <div class="header-buttons">
+                    <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn">
+                        📄 Name <span class="sort-icon" id="sort-name-icon"></span>
+                    </button>
+                    <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn">
+                        📅 Date <span class="sort-icon" id="sort-date-icon"></span>
+                    </button>
+                    <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn">
+                        🖼️ Slideshow
+                    </button>
+                    <button class="refresh-btn" onclick="loadCurrentDirectory()" id="refresh-btn">
+                        🔄 Refresh
+                    </button>
+                    <button class="back-btn" onclick="browser.goBack()" id="back-btn" disabled>
+                        ⬅️ Back
+                    </button>
+                    <button class="sort-btn" onclick="browser.toggleFavoritesPanel()" id="favorites-toggle-btn">
+                        ⭐ Favorites
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="main-content">
@@ -852,26 +1013,6 @@
                 <div class="panel-header">
                     <div>
                         <div class="panel-title">📂 Directory Contents</div>
-                    </div>
-                    <div>
-                        <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn">
-                            📄 Name <span class="sort-icon" id="sort-name-icon"></span>
-                        </button>
-                        <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn">
-                            📅 Date <span class="sort-icon" id="sort-date-icon"></span>
-                        </button>
-                        <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn">
-                            🖼️ Slideshow
-                        </button>
-                        <button class="refresh-btn" onclick="loadCurrentDirectory()" id="refresh-btn">
-                            🔄 Refresh
-                        </button>
-                        <button class="back-btn" onclick="browser.goBack()" id="back-btn" disabled>
-                            ⬅️ Back
-                        </button>
-                        <button class="sort-btn" onclick="browser.toggleFavoritesPanel()" id="favorites-toggle-btn">
-                            ⭐ Favorites
-                        </button>
                     </div>
                 </div>
                 <div class="file-list" id="file-list">
@@ -881,23 +1022,29 @@
                     </div>
                 </div>
                 
-                <!-- Favorites Panel -->
-                <div class="favorites-panel" id="favorites-panel">
-                    <div class="favorites-header">
-                        <div class="favorites-title">⭐ Favorites</div>
-                        <div class="favorites-count" id="favorites-count">0 files</div>
-                    </div>
-                    <div class="favorites-list" id="favorites-list">
-                        <!-- Favorites will be populated here -->
-                    </div>
-                    <button class="download-btn" onclick="browser.downloadFavorites()" id="download-btn" disabled>
-                        📥 Download Favorites
-                    </button>
-                </div>
             </div>
 
 
         </div>
+    </div>
+
+    <!-- Favorites Panel - Slides out from top -->
+    <div class="favorites-panel" id="favorites-panel">
+        <div class="favorites-header">
+            <div class="favorites-title">⭐ Favorites</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="favorites-count" id="favorites-count">0 files</div>
+                <button class="favorites-close" onclick="browser.toggleFavoritesPanel()" title="Close">
+                    ✕
+                </button>
+            </div>
+        </div>
+        <div class="favorites-list" id="favorites-list">
+            <!-- Favorites will be populated here -->
+        </div>
+        <button class="download-btn" onclick="browser.downloadFavorites()" id="download-btn" disabled>
+            📥 Download Favorites
+        </button>
     </div>
 
             <!-- Slideshow Modal -->
@@ -1793,6 +1940,7 @@
                 this.setupSwipeHandlers();
             }
 
+
             closeSlideshow() {
                 // Save current slideshow state before closing
                 this.saveSlideshowState(this.currentPath);
@@ -1806,6 +1954,25 @@
                 const modal = document.getElementById('slideshow-modal');
                 modal.style.display = 'none';
                 this.hideControls();
+                
+                // Restore body scrolling and positioning
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                document.body.style.height = '';
+                
+                // Reset modal styles
+                modal.style.position = '';
+                modal.style.top = '';
+                modal.style.left = '';
+                modal.style.right = '';
+                modal.style.bottom = '';
+                modal.style.width = '';
+                modal.style.height = '';
+                modal.style.maxHeight = '';
+                modal.style.minHeight = '';
+                modal.style.overflow = '';
+                modal.style.zIndex = '';
             }
 
             showControls() {
