@@ -221,12 +221,15 @@
             font-weight: 500;
             color: #e2e8f0;
             font-size: 0.8rem;
+            font-family: inherit;
         }
 
         .file-details {
-            font-size: 0.65rem;
-            color: #a0aec0;
+            font-size: 0.8rem;
+            color: #e2e8f0;
             text-align: right;
+            font-family: inherit;
+            font-weight: 500;
         }
 
         .file-size {
@@ -357,11 +360,14 @@
 
         .sort-icon {
             font-size: 0.7rem;
-            transition: transform 0.1s ease;
         }
-
-        .sort-icon.desc {
-            transform: rotate(180deg);
+        
+        .sort-icon::before {
+            content: '▲';
+        }
+        
+        .sort-icon.desc::before {
+            content: '▼';
         }
 
         .favorites-panel {
@@ -835,7 +841,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📁 Directory Browser</h1>
+            <h1>📁 Browser <span id="item-count">(0 items)</span></h1>
             <div class="breadcrumb" id="breadcrumb">
                 <span class="breadcrumb-item">Loading...</span>
             </div>
@@ -849,10 +855,10 @@
                     </div>
                     <div>
                         <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn">
-                            📄 Name <span class="sort-icon" id="sort-name-icon">▲</span>
+                            📄 Name <span class="sort-icon" id="sort-name-icon"></span>
                         </button>
                         <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn">
-                            📅 Date <span class="sort-icon" id="sort-date-icon">▲</span>
+                            📅 Date <span class="sort-icon" id="sort-date-icon"></span>
                         </button>
                         <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn">
                             🖼️ Slideshow
@@ -917,7 +923,6 @@
         class DirectoryBrowser {
             constructor() {
                 this.currentPath = ''; // Will be set when we get the server root
-                this.serverRoot = ''; // Will be updated when we get the actual root from server
                 this.apiBase = '/api';
                 this.slideshowImages = [];
                 this.currentImageIndex = 0;
@@ -937,7 +942,7 @@
                 
                 // Sort state tracking
                 this.currentSort = 'date'; // 'name' or 'date'
-                this.sortAscending = false; // true for ascending, false for descending (newest first by default)
+                this.sortAscending = true; // true for ascending, false for descending (oldest first by default)
                 this.directoryContents = []; // Store current directory contents for sorting
                 
                 // Last viewed file tracking
@@ -954,16 +959,14 @@
                 // Set up browser back button support
                 this.setupBrowserBackButton();
                 
-                // First, load the server root to get the correct root path
-                await this.loadServerRoot();
-                
                 // Check if there's a path in the URL on initial load
                 const urlParams = new URLSearchParams(window.location.search);
                 const pathParam = urlParams.get('path');
                 if (pathParam) {
                     this.currentPath = decodeURIComponent(pathParam);
                 } else {
-                    this.currentPath = this.serverRoot;
+                    // Load the server root to get the initial path
+                    await this.loadServerRoot();
                 }
                 
                 await this.loadDirectory(this.currentPath);
@@ -980,7 +983,6 @@
                     }
 
                     const data = await response.json();
-                    this.serverRoot = data.root_path;
                     this.currentPath = data.path;
                     
                     // Update the initial breadcrumb
@@ -988,9 +990,8 @@
                     
                 } catch (error) {
                     console.error('Failed to load server root:', error);
-                    // Fallback to a default path if server root can't be determined
-                    this.serverRoot = '/mnt/nasdata/pictures';
-                    this.currentPath = this.serverRoot;
+                    // Fallback to root path
+                    this.currentPath = '';
                 }
             }
 
@@ -1027,11 +1028,6 @@
                     const data = await response.json();
                     this.currentPath = data.path;
                     
-                    // Update server root if provided by the server
-                    if (data.root_path) {
-                        this.serverRoot = data.root_path;
-                    }
-                    
                     this.displayDirectory(data);
                     this.updateBreadcrumb(data.path, data.parent);
                     
@@ -1065,6 +1061,9 @@
             displayDirectory(data) {
                 const fileList = document.getElementById('file-list');
                 
+                // Update item count in header
+                this.updateItemCount(data.contents.length);
+                
                 if (data.contents.length === 0) {
                     fileList.innerHTML = '<div class="loading">Directory is empty</div>';
                     this.directoryContents = [];
@@ -1081,9 +1080,7 @@
                 fileList.innerHTML = html;
                 
                 // Update sort button states
-                setTimeout(() => {
-                    this.updateSortButtons();
-                }, 50);
+                this.updateSortButtons();
                 
                 // Try to select the last viewed file first, then fall back to clicked item
                 setTimeout(() => {
@@ -1098,7 +1095,7 @@
             createFileItem(item) {
                 const icon = this.getFileIcon(item.type, item.path);
                 const size = item.size ? this.formatSize(item.size) : '';
-                const modified = new Date(item.modified).toLocaleDateString();
+                const modified = new Date(item.modified).toLocaleDateString('en-GB'); // DD-MM-YYYY format
                 
                 return `
                     <div class="file-item" data-path="${this.escapeHtml(item.path)}" onclick="browser.handleFileClick('${item.path}', '${item.type}')">
@@ -1106,7 +1103,7 @@
                         <div class="file-info">
                             <div class="file-name">${this.escapeHtml(item.name)}</div>
                             <div class="file-details">
-                                ${item.permissions} • ${modified}${size ? ` • ${size}` : ''}
+                                ${modified}${size ? ` • ${size}` : ''}
                             </div>
                         </div>
                     </div>
@@ -1128,11 +1125,9 @@
             }
 
             formatSize(bytes) {
-                if (bytes === 0) return '0 B';
-                const k = 1024;
-                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+                if (bytes === 0) return '0.00 MB';
+                const mb = bytes / (1024 * 1024);
+                return mb.toFixed(2) + ' MB';
             }
 
             escapeHtml(text) {
@@ -1141,27 +1136,37 @@
                 return div.innerHTML;
             }
 
+            updateItemCount(count) {
+                const itemCountElement = document.getElementById('item-count');
+                if (itemCountElement) {
+                    const itemText = count === 1 ? 'item' : 'items';
+                    itemCountElement.textContent = `(${count} ${itemText})`;
+                }
+            }
+
             updateBreadcrumb(currentPath, parentPath) {
                 const breadcrumb = document.getElementById('breadcrumb');
                 
-                // If we're at the server root, just show the root name
-                if (currentPath === this.serverRoot) {
-                    const rootName = this.serverRoot.split('/').pop() || 'Root';
-                    breadcrumb.innerHTML = `<span class="breadcrumb-item" onclick="browser.navigateToPath('${this.serverRoot}')">${this.escapeHtml(rootName)}</span>`;
+                // If we're at the root (empty path), just show "Home"
+                if (!currentPath) {
+                    breadcrumb.innerHTML = `<span class="breadcrumb-item" onclick="browser.navigateToPath('')">Home</span>`;
                     return;
                 }
                 
-                // Get path parts relative to server root
-                const relativePath = currentPath.replace(this.serverRoot, '').replace(/^\/+/, '');
-                const pathParts = relativePath.split('/').filter(part => part);
+                // Split the relative path into parts
+                const pathParts = currentPath.split('/').filter(part => part);
                 
-                // Start with the server root
-                let html = `<span class="breadcrumb-item" onclick="browser.navigateToPath('${this.serverRoot}')">${this.escapeHtml(this.serverRoot.split('/').pop() || 'Root')}</span>`;
-                let currentPathBuilder = this.serverRoot;
+                // Start with the root
+                let html = `<span class="breadcrumb-item" onclick="browser.navigateToPath('')">Home</span>`;
+                let currentPathBuilder = '';
                 
                 // Add each directory level
                 pathParts.forEach((part, index) => {
-                    currentPathBuilder += '/' + part;
+                    if (currentPathBuilder) {
+                        currentPathBuilder += '/' + part;
+                    } else {
+                        currentPathBuilder = part;
+                    }
                     html += '<span class="breadcrumb-separator">/</span>';
                     html += `<span class="breadcrumb-item" onclick="browser.navigateToPath('${currentPathBuilder}')">${this.escapeHtml(part)}</span>`;
                 });
@@ -1329,6 +1334,9 @@
                 const html = sortedContents.map(item => this.createFileItem(item)).join('');
                 fileList.innerHTML = html;
                 
+                // Update item count in header
+                this.updateItemCount(this.directoryContents.length);
+                
                 // Update sort button states
                 this.updateSortButtons();
                 
@@ -1337,46 +1345,32 @@
             }
 
             updateSortButtons() {
-                console.log('updateSortButtons called - currentSort:', this.currentSort, 'sortAscending:', this.sortAscending);
-                
                 // Update name sort button
                 const nameBtn = document.getElementById('sort-name-btn');
                 const nameIcon = document.getElementById('sort-name-icon');
                 
-                if (!nameBtn || !nameIcon) {
-                    console.log('Name button elements not found');
-                    return;
-                }
-                
-                if (this.currentSort === 'name') {
-                    nameBtn.classList.add('active');
-                    nameIcon.textContent = this.sortAscending ? '▲' : '▼';
-                    nameIcon.classList.toggle('desc', !this.sortAscending);
-                    console.log('Name button set to active, arrow:', nameIcon.textContent);
-                } else {
-                    nameBtn.classList.remove('active');
-                    nameIcon.textContent = '▲';
-                    nameIcon.classList.remove('desc');
+                if (nameBtn && nameIcon) {
+                    if (this.currentSort === 'name') {
+                        nameBtn.classList.add('active');
+                        nameIcon.classList.toggle('desc', !this.sortAscending);
+                    } else {
+                        nameBtn.classList.remove('active');
+                        nameIcon.classList.remove('desc');
+                    }
                 }
                 
                 // Update date sort button
                 const dateBtn = document.getElementById('sort-date-btn');
                 const dateIcon = document.getElementById('sort-date-icon');
                 
-                if (!dateBtn || !dateIcon) {
-                    console.log('Date button elements not found');
-                    return;
-                }
-                
-                if (this.currentSort === 'date') {
-                    dateBtn.classList.add('active');
-                    dateIcon.textContent = this.sortAscending ? '▲' : '▼';
-                    dateIcon.classList.toggle('desc', !this.sortAscending);
-                    console.log('Date button set to active, arrow:', dateIcon.textContent);
-                } else {
-                    dateBtn.classList.remove('active');
-                    dateIcon.textContent = '▲';
-                    dateIcon.classList.remove('desc');
+                if (dateBtn && dateIcon) {
+                    if (this.currentSort === 'date') {
+                        dateBtn.classList.add('active');
+                        dateIcon.classList.toggle('desc', !this.sortAscending);
+                    } else {
+                        dateBtn.classList.remove('active');
+                        dateIcon.classList.remove('desc');
+                    }
                 }
             }
 
@@ -1851,10 +1845,8 @@
                 const prevArea = document.getElementById('prev-area');
                 const nextArea = document.getElementById('next-area');
                 
-                // Set image source - get relative path from current directory
-                const currentDir = this.currentPath;
-                const relativePath = image.path.replace(currentDir + '/', '');
-                imageElement.src = `${this.apiBase}/image/${encodeURIComponent(relativePath)}?dir=${encodeURIComponent(currentDir)}`;
+                // Set image source - image.path is already relative from server root
+                imageElement.src = `${this.apiBase}/image/${encodeURIComponent(image.path)}`;
                 
                 // Update info in both locations
                 const infoText = `${this.currentImageIndex + 1} / ${this.slideshowImages.length}`;
@@ -1979,10 +1971,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             browser = new DirectoryBrowser();
             
-            // Set initial sort button states after DOM is ready
-            setTimeout(() => {
-                browser.updateSortButtons();
-            }, 100);
+            // Initial sort button states will be set when first directory loads
             
             // Add keyboard navigation for slideshow
             document.addEventListener('keydown', (event) => {

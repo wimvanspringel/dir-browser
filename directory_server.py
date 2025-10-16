@@ -5,6 +5,7 @@ Provides REST API endpoints to browse directory contents on the server
 """
 
 import os
+import sys
 import json
 import stat
 import time
@@ -17,7 +18,7 @@ from flask_cors import CORS
 import logging
 
 # Configuration
-DEFAULT_ROOT_PATH = "/mnt/nassys"  # Default root directory to browse
+directory_toserve = ""  # Set in config.ini
 
 # Set up basic logging first
 import os
@@ -62,11 +63,16 @@ logger.info(f"Logging set to {log_level} level")
 flask_debug_mode = config.get('Logging', 'flaskdebug', fallback='False').lower() in ('True', 'true', '1', 'yes', 'on')
 logger.info(f"Flask debug mode: {flask_debug_mode}")
 
-if 'Scrape' in config:
-    media_dir = config.get('Scrape', 'media_dir', fallback=DEFAULT_ROOT_PATH)
-    if os.path.exists(media_dir):
-        DEFAULT_ROOT_PATH = media_dir
-logger.info(f"Using media directory: {DEFAULT_ROOT_PATH}")
+# Set directory to serve from config.ini, if not set, stop the server
+if 'Scrape' in config and 'media_dir' in config['Scrape']:
+    directory_toserve = config['Scrape']['media_dir']
+    logger.info(f"Using media directory from config.ini: {directory_toserve}")
+    if not os.path.exists(directory_toserve):
+        logger.error(f"Media directory does not exist: {directory_toserve}")
+        sys.exit(1)
+else:
+    logger.error("No media directory set in config.ini")
+    sys.exit(1)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -167,16 +173,22 @@ def is_safe_path(base_path, target_path):
 def get_directory_contents():
     """Get contents of a directory"""
     try:
-        # Get path parameter, default to root
-        path = request.args.get('path', DEFAULT_ROOT_PATH)
+        # Get path parameter (now relative), default to root
+        relative_path = request.args.get('path', '')
+        
+        # Convert relative path back to absolute for server operations
+        if relative_path:
+            path = os.path.join(directory_toserve, relative_path)
+        else:
+            path = directory_toserve
         
         # Debug logging
-        logger.info(f"Directory request - Requested path: {path}, Server root: {DEFAULT_ROOT_PATH}")
+        logger.info(f"Directory request - Requested relative path: {relative_path}, Server root: {directory_toserve}")
         logger.info(f"Path exists: {os.path.exists(path)}, Is directory: {os.path.isdir(path) if os.path.exists(path) else 'N/A'}")
         
         # Security check - ensure path is within allowed directory
-        if not is_safe_path(DEFAULT_ROOT_PATH, path):
-            logger.warning(f"Security check failed - Requested: {path}, Allowed root: {DEFAULT_ROOT_PATH}")
+        if not is_safe_path(directory_toserve, path):
+            logger.warning(f"Security check failed - Requested: {path}, Allowed root: {directory_toserve}")
             return jsonify({"error": "Access denied: Path outside allowed directory"}), 403
         
         # Check if path exists and is a directory
@@ -198,15 +210,35 @@ def get_directory_contents():
             item_path = os.path.join(path, item)
             file_info = get_file_info(item_path)
             if file_info:
+                # Convert absolute path to relative path for client
+                if file_info['path'].startswith(directory_toserve):
+                    file_info['path'] = os.path.relpath(file_info['path'], directory_toserve)
+                    if not file_info['path'] or file_info['path'] == '.':
+                        file_info['path'] = ''
                 contents.append(file_info)
         
         # Sort contents: directories first, then files, both alphabetically
         contents.sort(key=lambda x: (x['type'] != 'directory', x['name'].lower()))
         
+        # Convert paths to relative for client
+        relative_path = os.path.relpath(path, directory_toserve) if path != directory_toserve else ""
+        if relative_path == '.':
+            relative_path = ""
+        
+        parent_path = None
+        if path != directory_toserve:
+            parent_abs = os.path.dirname(path)
+            if parent_abs != directory_toserve:
+                parent_path = os.path.relpath(parent_abs, directory_toserve)
+                if parent_path == '.':
+                    parent_path = ""
+            else:
+                parent_path = ""
+        
         return jsonify({
-            "path": path,
-            "parent": os.path.dirname(path) if path != DEFAULT_ROOT_PATH else None,
-            "root_path": DEFAULT_ROOT_PATH,
+            "path": relative_path,
+            "parent": parent_path,
+            "root_path": "",  # Always empty for client
             "contents": contents,
             "total_items": len(contents)
         })
@@ -219,12 +251,18 @@ def get_directory_contents():
 def get_file_contents():
     """Get contents of a file (for text files)"""
     try:
-        path = request.args.get('path')
-        if not path:
+        relative_path = request.args.get('path')
+        if not relative_path:
             return jsonify({"error": "Path parameter required"}), 400
         
+        # Convert relative path back to absolute for server operations
+        if relative_path:
+            path = os.path.join(directory_toserve, relative_path)
+        else:
+            path = directory_toserve
+        
         # Security check
-        if not is_safe_path(DEFAULT_ROOT_PATH, path):
+        if not is_safe_path(directory_toserve, path):
             return jsonify({"error": "Access denied"}), 403
         
         if not os.path.exists(path):
@@ -273,11 +311,17 @@ def get_file_contents():
 def get_slideshow_images():
     """Get all JPG images in a directory for slideshow"""
     try:
-        path = request.args.get('path')
-        if not path:
+        relative_path = request.args.get('path')
+        if relative_path is None:
             return jsonify({"error": "Path parameter required"}), 400
         
-        if not is_safe_path(DEFAULT_ROOT_PATH, path):
+        # Convert relative path back to absolute for server operations
+        if relative_path:
+            path = os.path.join(directory_toserve, relative_path)
+        else:
+            path = directory_toserve
+        
+        if not is_safe_path(directory_toserve, path):
             return jsonify({"error": "Access denied"}), 403
         
         if not os.path.exists(path) or not os.path.isdir(path):
@@ -294,6 +338,11 @@ def get_slideshow_images():
                     if item.lower().endswith(allowed_extensions):
                         file_info = get_file_info(item_path)
                         if file_info:
+                            # Convert absolute path to relative path for client
+                            if file_info['path'].startswith(directory_toserve):
+                                file_info['path'] = os.path.relpath(file_info['path'], directory_toserve)
+                                if not file_info['path'] or file_info['path'] == '.':
+                                    file_info['path'] = ''
                             image_files.append(file_info)
         except PermissionError:
             return jsonify({"error": "Permission denied"}), 403
@@ -301,8 +350,13 @@ def get_slideshow_images():
         # Sort files by name
         image_files.sort(key=lambda x: x['name'].lower())
         
+        # Convert path to relative for client
+        relative_path = os.path.relpath(path, directory_toserve) if path != directory_toserve else ""
+        if relative_path == '.':
+            relative_path = ""
+        
         return jsonify({
-            "path": path,
+            "path": relative_path,
             "images": image_files,
             "total_images": len(image_files)
         })
@@ -364,16 +418,17 @@ def debug_requests():
 def serve_image(filepath):
     """Serve image files for slideshow"""
     try:
-        # Get the directory path from query parameter
-        directory_path = request.args.get('dir', DEFAULT_ROOT_PATH)
+        # The filepath is already relative from the server root
+        # Convert relative path back to absolute for server operations
+        if filepath:
+            full_path = os.path.join(directory_toserve, filepath)
+        else:
+            full_path = directory_toserve
         
-        logger.debug(f"Serving image: {filepath} from directory: {directory_path}")
-        
-        # Reconstruct the full path
-        full_path = os.path.join(directory_path, filepath)
+        logger.debug(f"Serving image: {filepath} -> {full_path}")
         
         # Security check
-        if not is_safe_path(DEFAULT_ROOT_PATH, full_path):
+        if not is_safe_path(directory_toserve, full_path):
             logger.warning(f"Access denied for image: {full_path}")
             return jsonify({"error": "Access denied"}), 403
         
@@ -399,10 +454,14 @@ def serve_image(filepath):
         except OSError:
             file_size = "unknown"
         
-        # Add more detailed logging for debugging
-        logger.info(f"Successfully serving image: {filepath} from {directory_path}")
+        # Get directory and filename for send_from_directory
+        directory_path = os.path.dirname(full_path)
+        filename = os.path.basename(full_path)
         
-        return send_from_directory(directory_path, filepath)
+        # Add more detailed logging for debugging
+        logger.info(f"Successfully serving image: {filename} from {directory_path}")
+        
+        return send_from_directory(directory_path, filename)
         
     except Exception as e:
         logger.error(f"Error serving image {filepath}: {e}")
@@ -412,12 +471,18 @@ def serve_image(filepath):
 def serve_video():
     """Serve video files for playback"""
     try:
-        path = request.args.get('path')
-        if not path:
+        relative_path = request.args.get('path')
+        if not relative_path:
             return jsonify({"error": "Path parameter required"}), 400
         
+        # Convert relative path back to absolute for server operations
+        if relative_path:
+            path = os.path.join(directory_toserve, relative_path)
+        else:
+            path = directory_toserve
+        
         # Security check
-        if not is_safe_path(DEFAULT_ROOT_PATH, path):
+        if not is_safe_path(directory_toserve, path):
             logger.warning(f"Access denied for video: {path}")
             return jsonify({"error": "Access denied"}), 403
         
@@ -471,11 +536,20 @@ def download_favorites():
         if not isinstance(files, list) or len(files) == 0:
             return jsonify({"error": "At least one file required"}), 400
         
-        # Security check - ensure all files are within allowed directory
+        # Convert relative paths back to absolute for server operations
+        absolute_files = []
         for file_path in files:
-            if not is_safe_path(DEFAULT_ROOT_PATH, file_path):
-                logger.warning(f"Access denied for file in favorites download: {file_path}")
+            if file_path:
+                absolute_path = os.path.join(directory_toserve, file_path)
+            else:
+                absolute_path = directory_toserve
+            
+            # Security check - ensure all files are within allowed directory
+            if not is_safe_path(directory_toserve, absolute_path):
+                logger.warning(f"Access denied for file in favorites download: {absolute_path}")
                 return jsonify({"error": "Access denied: File outside allowed directory"}), 403
+            
+            absolute_files.append(absolute_path)
         
         # Create temporary ZIP file
         temp_fd, temp_path = tempfile.mkstemp(suffix='.zip')
@@ -483,14 +557,37 @@ def download_favorites():
         
         try:
             with zipfile.ZipFile(temp_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                for file_path in files:
+                file_mapping = {}
+                file_counter = 1
+                
+                for file_path in absolute_files:
                     if os.path.exists(file_path) and os.path.isfile(file_path):
                         # Get relative path from server root
-                        rel_path = os.path.relpath(file_path, DEFAULT_ROOT_PATH)
-                        zip_file.write(file_path, rel_path)
-                        logger.info(f"Added to ZIP: {rel_path}")
+                        rel_path = os.path.relpath(file_path, directory_toserve)
+                        
+                        # Create new filename with 4-digit counter
+                        file_extension = os.path.splitext(rel_path)[1]
+                        new_filename = f"{file_counter:04d}{file_extension}"
+                        
+                        # Add file to ZIP with new name
+                        zip_file.write(file_path, new_filename)
+                        
+                        # Store mapping
+                        file_mapping[new_filename] = {
+                            "original_path": rel_path,
+                            "original_name": os.path.basename(rel_path),
+                            "file_number": file_counter
+                        }
+                        
+                        logger.info(f"Added to ZIP: {rel_path} -> {new_filename}")
+                        file_counter += 1
                     else:
                         logger.warning(f"File not found or not accessible: {file_path}")
+                
+                # Add JSON mapping file to ZIP
+                mapping_json = json.dumps(file_mapping, indent=2)
+                zip_file.writestr("file_mapping.json", mapping_json)
+                logger.info("Added file_mapping.json to ZIP")
             
             # Send the ZIP file
             return send_file(
@@ -524,7 +621,7 @@ if __name__ == '__main__':
     # Set server start time for monitoring
     app.start_time = time.time()
     
-    logger.info(f"Starting directory server with root path: {DEFAULT_ROOT_PATH}")
+    logger.info(f"Starting directory server with root path: {directory_toserve}")
     logger.info("Debug endpoints available:")
     logger.info("  - GET /api/health - Server health check")
     logger.info("  - GET /api/debug/requests - Show active requests")
