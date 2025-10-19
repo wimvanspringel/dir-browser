@@ -13,6 +13,7 @@ services:
     volumes:
       # Mount the directory you want to browse
       - /share/data:/mnt/nasdata:ro
+      - /share/systemp:/mnt/nassys:ro
       # Mount logs directory for persistence
       - ./logs:/app/logs
       # Optional: mount config file if you have one

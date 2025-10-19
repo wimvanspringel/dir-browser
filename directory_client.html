@@ -50,18 +50,25 @@
 
         .header-controls {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
-            gap: 10px;
+            margin-top: 8px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .header-buttons {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
+        }
+
+        .header-buttons-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
         }
 
         .header h1 {
@@ -112,40 +119,10 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
-            height: calc(100vh - 200px); /* Fixed height to make file-list scrollable */
         }
 
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .panel-header > div:last-child {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .panel-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-
-        .stats {
-            font-size: 0.9rem;
-            color: #a0aec0;
-        }
 
         .file-list {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 0;
             scrollbar-width: thin;
             scrollbar-color: #4a5568 #2d3748;
         }
@@ -285,25 +262,6 @@
 
 
 
-        .refresh-btn {
-            background-color: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.1s ease;
-        }
-
-        .refresh-btn:hover {
-            background-color: #5a67d8;
-        }
-
-        .refresh-btn:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
-        }
 
         .slideshow-btn {
             background-color: #ed8936;
@@ -373,6 +331,7 @@
         .sort-btn.active:hover {
             background-color: #5a67d8;
         }
+
 
         .sort-icon {
             font-size: 0.7rem;
@@ -582,6 +541,26 @@
             height: 20%;
             cursor: pointer;
             z-index: 5;
+            background: rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .slideshow-exit-zone:hover {
+            opacity: 1;
+        }
+
+        .exit-indicator {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .slideshow-favorite-zone {
@@ -762,16 +741,7 @@
                 font-size: 1.5rem;
             }
             
-            .header-controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-            }
             
-            .header-buttons {
-                justify-content: center;
-                flex-wrap: wrap;
-            }
             
             .favorites-panel {
                 max-height: 60vh;
@@ -789,17 +759,10 @@
             
             .directory-panel {
                 padding: 5px;
-                height: calc(100vh - 180px); /* Adjust for mobile header */
             }
             
-            .panel-header {
-                flex-direction: column;
-                gap: 5px;
-                align-items: flex-start;
-            }
             
             .slideshow-btn,
-            .refresh-btn,
             .back-btn {
                 padding: 6px 12px;
                 font-size: 0.8rem;
@@ -842,7 +805,6 @@
             
             .directory-panel {
                 padding: 3px;
-                height: calc(100vh - 160px); /* Adjust for small mobile header */
             }
             
             .panel-title {
@@ -852,6 +814,7 @@
             .stats {
                 font-size: 0.75rem;
             }
+            
         }
 
         /* Kiosk display optimizations - reduce flash effects */
@@ -993,29 +956,28 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📁 Browser <span id="item-count">(0 items)</span></h1>
+            <h1>📁 Browser <span id="item-count">(0)</span></h1>
             <div class="breadcrumb" id="breadcrumb">
                 <span class="breadcrumb-item">Loading...</span>
             </div>
             <div class="header-controls">
                 <div class="header-buttons">
-                    <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn">
-                        📄 Name <span class="sort-icon" id="sort-name-icon"></span>
+                    <button class="sort-btn" onclick="browser.toggleFavoritesPanel()" id="favorites-toggle-btn" title="Favorites">
+                        ⭐
                     </button>
-                    <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn">
-                        📅 Date <span class="sort-icon" id="sort-date-icon"></span>
+                    <button class="sort-btn" onclick="browser.toggleSort('name')" id="sort-name-btn" title="Sort by Name">
+                        📄 <span class="sort-icon" id="sort-name-icon"></span>
                     </button>
-                    <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn">
-                        🖼️ Slideshow
+                    <button class="sort-btn" onclick="browser.toggleSort('date')" id="sort-date-btn" title="Sort by Date">
+                        📅 <span class="sort-icon" id="sort-date-icon"></span>
                     </button>
-                    <button class="refresh-btn" onclick="loadCurrentDirectory()" id="refresh-btn">
-                        🔄 Refresh
+                    <button class="slideshow-btn" onclick="browser.startSlideshow()" id="slideshow-btn" title="Slideshow">
+                        🖼️
                     </button>
-                    <button class="back-btn" onclick="browser.goBack()" id="back-btn" disabled>
-                        ⬅️ Back
-                    </button>
-                    <button class="sort-btn" onclick="browser.toggleFavoritesPanel()" id="favorites-toggle-btn">
-                        ⭐ Favorites
+                </div>
+                <div class="header-buttons-right">
+                    <button class="back-btn" onclick="browser.goBack()" id="back-btn" disabled title="Back">
+                        ⬅️
                     </button>
                 </div>
             </div>
@@ -1023,11 +985,6 @@
 
         <div class="main-content">
             <div class="directory-panel">
-                <div class="panel-header">
-                    <div>
-                        <div class="panel-title">📂 Directory Contents</div>
-                    </div>
-                </div>
                 <div class="file-list" id="file-list">
                     <div class="loading">
                         <div class="spinner"></div>
@@ -1063,7 +1020,9 @@
             <!-- Slideshow Modal -->
         <div id="slideshow-modal" class="slideshow-modal">
             <div class="slideshow-content">
-                <div class="slideshow-exit-zone" onclick="browser.closeSlideshow()" id="exit-zone"></div>
+                <div class="slideshow-exit-zone" onclick="browser.closeSlideshow()" id="exit-zone">
+                    <div class="exit-indicator">Click to exit slideshow</div>
+                </div>
                 <div class="slideshow-image-container">
                     <div class="slideshow-nav-area slideshow-nav-left" onclick="browser.previousImage()" id="prev-area"></div>
                     <img id="slideshow-image" class="slideshow-image" src="" alt="Slideshow Image">
@@ -1206,6 +1165,8 @@
                             this.navigationHistory.push(data.path);
                             this.currentHistoryIndex = this.navigationHistory.length - 1;
                         }
+                        // Update back button state after back navigation
+                        this.updateBackButton();
                     }
                     
                     // Scroll position will be restored in displayDirectory after file selection
@@ -1305,8 +1266,7 @@
             updateItemCount(count) {
                 const itemCountElement = document.getElementById('item-count');
                 if (itemCountElement) {
-                    const itemText = count === 1 ? 'item' : 'items';
-                    itemCountElement.textContent = `(${count} ${itemText})`;
+                    itemCountElement.textContent = `(${count})`;
                 }
             }
 
@@ -1879,18 +1839,6 @@
                 this.loadDirectory(path);
             }
 
-            async loadCurrentDirectory() {
-                const refreshBtn = document.getElementById('refresh-btn');
-                refreshBtn.disabled = true;
-                refreshBtn.textContent = '🔄 Loading...';
-                
-                try {
-                    await this.loadDirectory(this.currentPath);
-                } finally {
-                    refreshBtn.disabled = false;
-                    refreshBtn.textContent = '🔄 Refresh';
-                }
-            }
 
             async startSlideshow() {
                 try {
@@ -2204,9 +2152,6 @@
             browser.navigateToPath(path);
         }
 
-        function loadCurrentDirectory() {
-            browser.loadCurrentDirectory();
-        }
     </script>
 </body>
 </html> 
