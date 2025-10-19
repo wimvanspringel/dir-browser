@@ -119,10 +119,13 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
+            height: calc(100vh - 200px); /* Fixed height to enable scrolling */
         }
 
 
         .file-list {
+            overflow-y: auto;
+            flex: 1;
             scrollbar-width: thin;
             scrollbar-color: #4a5568 #2d3748;
         }
@@ -1115,7 +1118,7 @@
                     const data = await response.json();
                     this.currentPath = data.path;
                     
-                    this.displayDirectory(data);
+                    this.displayDirectory(data, isBackNavigation);
                     this.updateBreadcrumb(data.path, data.parent);
                     
                     // Add to navigation history if not a back navigation
@@ -1144,7 +1147,7 @@
 
 
 
-            displayDirectory(data) {
+            displayDirectory(data, isBackNavigation = false) {
                 const fileList = document.getElementById('file-list');
                 
                 // Update item count in header
@@ -1175,12 +1178,14 @@
                     if (!this.lastViewedFile || !this.directoryContents.some(item => item.path === this.lastViewedFile)) {
                         this.restoreClickedItemHighlight(data.path);
                     }
+                    
+                    // Restore scroll position after file selection is complete (only on back navigation)
+                    if (isBackNavigation) {
+                        setTimeout(() => {
+                            this.restoreScrollPosition(data.path);
+                        }, 100);
+                    }
                 }, 50);
-                
-                // Restore scroll position after a longer delay to ensure all other operations complete
-                setTimeout(() => {
-                    this.restoreScrollPosition(data.path);
-                }, 300);
             }
 
             createFileItem(item) {
@@ -1309,13 +1314,15 @@
             saveScrollPosition(path) {
                 const fileList = document.getElementById('file-list');
                 if (fileList) {
-                    this.scrollPositions.set(path, fileList.scrollTop);
+                    const scrollTop = fileList.scrollTop;
+                    this.scrollPositions.set(path, scrollTop);
                 }
             }
 
             restoreScrollPosition(path) {
                 const fileList = document.getElementById('file-list');
                 const savedPosition = this.scrollPositions.get(path);
+                
                 if (fileList && savedPosition !== undefined) {
                     // Use requestAnimationFrame to ensure DOM is ready
                     requestAnimationFrame(() => {
@@ -1803,10 +1810,6 @@
             }
 
             navigateToPath(path) {
-                // Save scroll position before navigating away from current directory
-                if (this.currentPath && this.currentPath !== path) {
-                    this.saveScrollPosition(this.currentPath);
-                }
                 this.loadDirectory(path);
             }
 
