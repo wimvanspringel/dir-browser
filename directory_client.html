@@ -267,12 +267,12 @@
             background-color: #ed8936;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             transition: background-color 0.1s ease;
-            margin-left: 10px;
+            margin-left: 5px;
         }
 
         .slideshow-btn:hover {
@@ -510,13 +510,11 @@
             cursor: default;
         }
 
-        .slideshow-modal.show-controls .slideshow-controls,
-        .slideshow-modal.show-controls .close-slideshow {
+        .slideshow-modal.show-controls .slideshow-controls {
             opacity: 1;
         }
 
-        .slideshow-controls,
-        .close-slideshow {
+        .slideshow-controls {
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -625,6 +623,7 @@
             justify-content: center;
             gap: 8px;
             padding: 6px 12px;
+            z-index: 10;
         }
 
         .slideshow-btn-control {
@@ -669,12 +668,16 @@
 
         .slideshow-info {
             color: white;
-            font-size: 0.75rem;
+            font-size: 1.2rem;
             margin: 0 8px;
             text-align: center;
-            font-weight: 400;
+            font-weight: 600;
             line-height: 1;
             cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
             transition: color 0.1s ease;
         }
 
@@ -682,45 +685,7 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        .slideshow-bottom-info {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 300;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 4px 12px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            z-index: 10;
-            pointer-events: none;
-            opacity: 0.8;
-        }
 
-        .close-slideshow {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            color: white;
-            font-size: 1.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-
-        .close-slideshow:hover {
-            color: rgba(255, 255, 255, 0.8);
-            transform: scale(1.05);
-        }
 
         @media (max-width: 768px) {
             .main-content {
@@ -1034,7 +999,6 @@
                 <div class="slideshow-controls">
                     <div class="slideshow-info" id="slideshow-info" onclick="browser.toggleControls()">0 / 0</div>
                 </div>
-                <div class="slideshow-bottom-info" id="slideshow-bottom-info">0 / 0</div>
             </div>
         </div>
 
@@ -1318,6 +1282,13 @@
             }
 
             goBack() {
+                // If slideshow is open, close it instead of navigating back
+                const slideshowModal = document.getElementById('slideshow-modal');
+                if (slideshowModal && slideshowModal.style.display === 'block') {
+                    this.closeSlideshow();
+                    return;
+                }
+                
                 if (this.currentHistoryIndex > 0) {
                     this.currentHistoryIndex--;
                     const previousPath = this.navigationHistory[this.currentHistoryIndex];
@@ -1921,7 +1892,7 @@
                 const modal = document.getElementById('slideshow-modal');
                 modal.style.display = 'block';
                 this.displayCurrentImage();
-                this.showControls();
+                this.hideControls();
                 this.setupSwipeHandlers();
             }
 
@@ -1963,14 +1934,6 @@
             showControls() {
                 const modal = document.getElementById('slideshow-modal');
                 modal.classList.add('show-controls');
-                
-                // Auto-hide controls after 1 second
-                if (this.controlsTimeout) {
-                    clearTimeout(this.controlsTimeout);
-                }
-                this.controlsTimeout = setTimeout(() => {
-                    this.hideControls();
-                }, 1000);
             }
 
             hideControls() {
@@ -1993,19 +1956,15 @@
                 const image = this.slideshowImages[this.currentImageIndex];
                 const imageElement = document.getElementById('slideshow-image');
                 const infoElement = document.getElementById('slideshow-info');
-                const bottomInfoElement = document.getElementById('slideshow-bottom-info');
                 const prevArea = document.getElementById('prev-area');
                 const nextArea = document.getElementById('next-area');
                 
                 // Set image source - image.path is already relative from server root
                 imageElement.src = `${this.apiBase}/image/${encodeURIComponent(image.path)}`;
                 
-                // Update info in both locations
+                // Update info
                 const infoText = `${this.currentImageIndex + 1} / ${this.slideshowImages.length}`;
                 infoElement.textContent = infoText;
-                if (bottomInfoElement) {
-                    bottomInfoElement.textContent = infoText;
-                }
                 
                 // Update clickable area states (visual feedback)
                 if (prevArea) {
@@ -2016,9 +1975,6 @@
                     nextArea.style.opacity = this.currentImageIndex === this.slideshowImages.length - 1 ? '0.3' : '1';
                     nextArea.style.cursor = this.currentImageIndex === this.slideshowImages.length - 1 ? 'not-allowed' : 'pointer';
                 }
-                
-                // Show controls when navigating
-                this.showControls();
                 
                 // Update favorite indicator
                 this.updateFavoriteIndicator();
@@ -2125,7 +2081,7 @@
             
             // Initial sort button states will be set when first directory loads
             
-            // Add keyboard navigation for slideshow
+            // Add keyboard navigation for slideshow and general navigation
             document.addEventListener('keydown', (event) => {
                 if (document.getElementById('slideshow-modal').style.display === 'block') {
                     switch(event.key) {
@@ -2138,9 +2094,21 @@
                         case 'Escape':
                             browser.closeSlideshow();
                             break;
+                        case 'Backspace':
+                            event.preventDefault();
+                            browser.closeSlideshow();
+                            break;
                         case ' ':
                             event.preventDefault();
                             browser.toggleControls();
+                            break;
+                    }
+                } else {
+                    // General navigation keyboard shortcuts
+                    switch(event.key) {
+                        case 'Backspace':
+                            event.preventDefault();
+                            browser.goBack();
                             break;
                     }
                 }
