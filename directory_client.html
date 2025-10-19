@@ -37,12 +37,15 @@
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 15px;
-            margin-bottom: 10px;
+            margin: 10px 10px 10px 10px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             flex-shrink: 0;
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header-controls {
@@ -97,6 +100,7 @@
             grid-template-columns: 1fr;
             gap: 8px;
             flex: 1;
+            margin-top: 160px; /* Add space for fixed header */
         }
 
         .directory-panel {
@@ -108,6 +112,7 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
+            height: calc(100vh - 200px); /* Fixed height to make file-list scrollable */
         }
 
         .panel-header {
@@ -741,6 +746,7 @@
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
+                margin-top: 140px; /* Adjust for mobile header */
             }
             
             .container {
@@ -749,7 +755,7 @@
             
             .header {
                 padding: 10px;
-                margin-bottom: 5px;
+                margin: 5px 5px 5px 5px;
             }
             
             .header h1 {
@@ -777,8 +783,13 @@
                 padding: 2px;
             }
             
+            .main-content {
+                margin-top: 120px; /* Adjust for small mobile header */
+            }
+            
             .directory-panel {
                 padding: 5px;
+                height: calc(100vh - 180px); /* Adjust for mobile header */
             }
             
             .panel-header {
@@ -818,6 +829,7 @@
             
             .header {
                 padding: 8px;
+                margin: 2px 2px 2px 2px;
             }
             
             .header h1 {
@@ -830,6 +842,7 @@
             
             .directory-panel {
                 padding: 3px;
+                height: calc(100vh - 160px); /* Adjust for small mobile header */
             }
             
             .panel-title {
@@ -1100,6 +1113,7 @@
                 this.favoritesPanelVisible = false;
                 
                 this.init();
+                this.setupScrollTracking();
             }
 
             async init() {
@@ -1151,6 +1165,10 @@
                 });
             }
 
+            setupScrollTracking() {
+                // Scroll tracking setup (currently unused but kept for future enhancements)
+            }
+
             addToBrowserHistory(path) {
                 const state = { path: path };
                 const url = `?path=${encodeURIComponent(path)}`;
@@ -1159,9 +1177,8 @@
 
             async loadDirectory(path, isBackNavigation = false) {
                 try {
-                    // Save current state before navigating
+                    // Save slideshow state before navigating (scroll position is saved in handleFileClick)
                     if (this.currentPath && !isBackNavigation) {
-                        this.saveScrollPosition(this.currentPath);
                         this.saveSlideshowState(this.currentPath);
                     }
                     
@@ -1191,10 +1208,7 @@
                         }
                     }
                     
-                    // Restore scroll position after a short delay to ensure content is loaded
-                    setTimeout(() => {
-                        this.restoreScrollPosition(data.path);
-                    }, 100);
+                    // Scroll position will be restored in displayDirectory after file selection
                     
                 } catch (error) {
                     this.showError(`Failed to load directory: ${error.message}`);
@@ -1236,7 +1250,12 @@
                     if (!this.lastViewedFile || !this.directoryContents.some(item => item.path === this.lastViewedFile)) {
                         this.restoreClickedItemHighlight(data.path);
                     }
-                }, 100);
+                }, 50);
+                
+                // Restore scroll position after a longer delay to ensure all other operations complete
+                setTimeout(() => {
+                    this.restoreScrollPosition(data.path);
+                }, 300);
             }
 
             createFileItem(item) {
@@ -1367,7 +1386,17 @@
                 const fileList = document.getElementById('file-list');
                 const savedPosition = this.scrollPositions.get(path);
                 if (fileList && savedPosition !== undefined) {
-                    fileList.scrollTop = savedPosition;
+                    // Use requestAnimationFrame to ensure DOM is ready
+                    requestAnimationFrame(() => {
+                        fileList.scrollTop = savedPosition;
+                        
+                        // Verify the scroll position was set correctly and retry if needed
+                        setTimeout(() => {
+                            if (Math.abs(fileList.scrollTop - savedPosition) > 10) {
+                                fileList.scrollTop = savedPosition;
+                            }
+                        }, 50);
+                    });
                 }
             }
 
@@ -1521,7 +1550,7 @@
                 }
             }
 
-            selectFileInList(filePath) {
+            selectFileInList(filePath, shouldScroll = true) {
                 // Clear any existing selections
                 this.clearHighlights();
                 
@@ -1532,11 +1561,13 @@
                     if (itemPath === filePath) {
                         item.classList.add('highlighted');
                         
-                        // Scroll the file into view
-                        item.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'center' 
-                        });
+                        // Only scroll the file into view if requested
+                        if (shouldScroll) {
+                            item.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center' 
+                            });
+                        }
                     }
                 });
                 
@@ -1553,7 +1584,7 @@
                     );
                     
                     if (currentDirFiles.length > 0) {
-                        this.selectFileInList(this.lastViewedFile);
+                        this.selectFileInList(this.lastViewedFile, false); // Don't scroll when restoring
                     }
                 }
             }
@@ -1731,6 +1762,8 @@
                 this.saveClickedItem(this.currentPath, path);
                 
                 if (type === 'directory') {
+                    // Save scroll position before navigating away from current directory
+                    this.saveScrollPosition(this.currentPath);
                     this.navigateToPath(path);
                 } else if (this.isVideoFile(path)) {
                     this.lastViewedFile = path; // Track last viewed file
@@ -1839,6 +1872,10 @@
             }
 
             navigateToPath(path) {
+                // Save scroll position before navigating away from current directory
+                if (this.currentPath && this.currentPath !== path) {
+                    this.saveScrollPosition(this.currentPath);
+                }
                 this.loadDirectory(path);
             }
 
