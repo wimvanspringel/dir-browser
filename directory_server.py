@@ -608,6 +608,68 @@ def download_favorites():
         logger.error(f"Error in download_favorites: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
+@app.route('/api/delete-favorites', methods=['POST'])
+def delete_favorites():
+    """Delete multiple favorite files from the server."""
+    try:
+        data = request.get_json()
+        if not data or 'files' not in data:
+            return jsonify({"error": "Files list required"}), 400
+
+        files = data['files']
+        if not isinstance(files, list) or len(files) == 0:
+            return jsonify({"error": "At least one file required"}), 400
+
+        deleted = []
+        errors = []
+
+        for rel_path in files:
+            try:
+                if rel_path:
+                    absolute_path = os.path.join(directory_toserve, rel_path)
+                else:
+                    absolute_path = directory_toserve
+
+                if not is_safe_path(directory_toserve, absolute_path):
+                    msg = f"Access denied for delete: {absolute_path}"
+                    logger.warning(msg)
+                    errors.append({"path": rel_path, "error": "Access denied"})
+                    continue
+
+                if not os.path.exists(absolute_path):
+                    logger.warning(f"File not found for delete: {absolute_path}")
+                    errors.append({"path": rel_path, "error": "File not found"})
+                    continue
+
+                if not os.path.isfile(absolute_path):
+                    logger.warning(f"Not a file for delete: {absolute_path}")
+                    errors.append({"path": rel_path, "error": "Not a file"})
+                    continue
+
+                os.remove(absolute_path)
+                logger.info(f"Deleted favorite file: {absolute_path}")
+                deleted.append(rel_path)
+            except Exception as file_error:
+                logger.error(f"Error deleting favorite file {rel_path}: {file_error}")
+                errors.append({"path": rel_path, "error": "Delete failed"})
+
+        message_parts = []
+        if deleted:
+            message_parts.append(f"Deleted {len(deleted)} file(s).")
+        if errors:
+            message_parts.append(f"{len(errors)} file(s) could not be deleted.")
+
+        return jsonify({
+            "deleted_paths": deleted,
+            "errors": errors,
+            "message": " ".join(message_parts) if message_parts else "No files were processed."
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in delete_favorites: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Endpoint not found"}), 404

@@ -496,6 +496,81 @@
             cursor: not-allowed;
         }
 
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(6px);
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirm-dialog-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .confirm-dialog-text {
+            font-size: 0.85rem;
+            color: #cbd5f5;
+            margin-bottom: 16px;
+        }
+
+        .confirm-dialog-warning {
+            font-size: 0.8rem;
+            color: #feb2b2;
+            margin-bottom: 16px;
+        }
+
+        .confirm-dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .confirm-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .confirm-btn-cancel {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .confirm-btn-cancel:hover {
+            background: #2d3748;
+        }
+
+        .confirm-btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .confirm-btn-danger:hover {
+            background: #c53030;
+        }
+
         .slideshow-modal {
             display: none;
             position: fixed;
@@ -688,7 +763,142 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Video modal - same zone pattern as slideshow */
+        .video-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 1000;
+            -webkit-tap-highlight-color: transparent;
+        }
 
+        .video-modal-exit-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            cursor: pointer;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-modal-exit-zone:hover {
+            opacity: 1;
+        }
+
+        .video-modal-favorite-zone {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 16px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-modal-favorite-zone .favorite-indicator {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .video-modal-favorite-zone:hover .favorite-indicator {
+            opacity: 1;
+        }
+
+        .video-modal-favorite-zone:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .video-modal-spacer {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .video-modal-center {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .video-modal-content {
+            position: relative;
+            max-width: 95%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 2;
+        }
+
+        .video-modal-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .video-modal-content video {
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .video-modal-bottom-bar {
+            flex: 1;
+            min-height: 48px;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .video-modal-nav-area {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 20%;
+            cursor: pointer;
+            z-index: 1;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .video-modal-nav-left {
+            left: 0;
+        }
+
+        .video-modal-nav-right {
+            right: 0;
+        }
+
+        .video-modal-favorite-zone {
+            flex: 1;
+        }
 
         @media (max-width: 768px) {
             .main-content {
@@ -983,6 +1193,26 @@
         <button class="download-btn" onclick="browser.downloadFavorites()" id="download-btn" disabled>
             📥 Download Favorites
         </button>
+        <button class="download-btn" onclick="browser.showDeleteFavoritesModal()" id="delete-favorites-btn" disabled>
+            🗑️ Delete Favorites from Server
+        </button>
+    </div>
+
+    <!-- Delete favorites confirmation modal -->
+    <div class="confirm-overlay" id="delete-favorites-modal">
+        <div class="confirm-dialog">
+            <div class="confirm-dialog-title">Delete all favorite files?</div>
+            <div class="confirm-dialog-text">
+                This will permanently delete all files currently in your Favorites list from the server.
+            </div>
+            <div class="confirm-dialog-warning">
+                This action cannot be undone.
+            </div>
+            <div class="confirm-dialog-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="browser.hideDeleteFavoritesModal()">Cancel</button>
+                <button class="confirm-btn confirm-btn-danger" onclick="browser.confirmDeleteFavorites()">Delete files</button>
+            </div>
+        </div>
     </div>
 
             <!-- Slideshow Modal -->
@@ -1018,6 +1248,9 @@
                 this.touchStartY = 0;
                 this.touchEndX = 0;
                 this.touchEndY = 0;
+                this.currentVideoPath = null;
+                this.currentVideoList = [];
+                this.currentVideoIndex = -1;
                 
                 // Navigation history tracking
                 this.navigationHistory = [];
@@ -1040,6 +1273,20 @@
                 
                 this.init();
                 this.setupScrollTracking();
+            }
+
+            closeVideoModal() {
+                const modal = document.getElementById('video-modal');
+                if (!modal) {
+                    return;
+                }
+                document.body.removeChild(modal);
+                if (this.currentVideoPath) {
+                    this.selectFileInList(this.currentVideoPath);
+                }
+                this.currentVideoPath = null;
+                this.currentVideoList = [];
+                this.currentVideoIndex = -1;
             }
 
             async init() {
@@ -1414,6 +1661,34 @@
                 this.redisplayDirectory();
             }
 
+            /** Split name into alternating digit/non-digit chunks for natural sort (numbers as numbers). */
+            naturalSortChunks(name) {
+                const chunks = [];
+                const re = /\d+|\D+/g;
+                let m;
+                while ((m = re.exec(name)) !== null) {
+                    const s = m[0];
+                    chunks.push(/^\d+$/.test(s) ? parseInt(s, 10) : s.toLowerCase());
+                }
+                return chunks;
+            }
+
+            compareNatural(aChunks, bChunks) {
+                const len = Math.min(aChunks.length, bChunks.length);
+                for (let i = 0; i < len; i++) {
+                    const a = aChunks[i];
+                    const b = bChunks[i];
+                    let c = 0;
+                    if (typeof a === 'number' && typeof b === 'number') {
+                        c = a - b;
+                    } else {
+                        c = String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+                    }
+                    if (c !== 0) return c;
+                }
+                return aChunks.length - bChunks.length;
+            }
+
             applySorting(contents) {
                 const sorted = [...contents];
                 
@@ -1421,8 +1696,10 @@
                     let comparison = 0;
                     
                     if (this.currentSort === 'name') {
-                        // Sort by name (case insensitive)
-                        comparison = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                        comparison = this.compareNatural(
+                            this.naturalSortChunks(a.name),
+                            this.naturalSortChunks(b.name)
+                        );
                     } else if (this.currentSort === 'date') {
                         // Sort by modification date
                         const dateA = new Date(a.modified);
@@ -1556,6 +1833,42 @@
                 this.showFavoriteFeedback('Removed from favorites');
             }
 
+            toggleFavoriteForPath(filePath, indicatorElement) {
+                if (this.favorites.has(filePath)) {
+                    this.favorites.delete(filePath);
+                    this.updateFavoritesPanel();
+                    this.showFavoriteFeedbackFor(indicatorElement, 'Removed from favorites', filePath);
+                } else {
+                    this.favorites.add(filePath);
+                    this.updateFavoritesPanel();
+                    this.showFavoriteFeedbackFor(indicatorElement, 'Added to favorites!', filePath);
+                }
+                this.updateVideoFavoriteIndicator(indicatorElement, filePath);
+            }
+
+            showFavoriteFeedbackFor(indicatorElement, message, filePath) {
+                if (!indicatorElement) return;
+                indicatorElement.textContent = message;
+                indicatorElement.style.background = 'rgba(56, 161, 105, 0.9)';
+                indicatorElement.style.color = 'white';
+                setTimeout(() => {
+                    indicatorElement.style.background = 'rgba(255, 255, 255, 0.9)';
+                    indicatorElement.style.color = '#333';
+                    if (filePath !== undefined) {
+                        this.updateVideoFavoriteIndicator(indicatorElement, filePath);
+                    }
+                }, 2000);
+            }
+
+            updateVideoFavoriteIndicator(indicatorElement, filePath) {
+                if (!indicatorElement) return;
+                if (this.favorites.has(filePath)) {
+                    indicatorElement.textContent = '⭐ In favorites - Click to remove';
+                } else {
+                    indicatorElement.textContent = 'Click to add to favorites';
+                }
+            }
+
             showFavoriteFeedback(message) {
                 const indicator = document.getElementById('favorite-indicator');
                 const originalText = indicator.textContent;
@@ -1592,9 +1905,13 @@
                 const count = document.getElementById('favorites-count');
                 const list = document.getElementById('favorites-list');
                 const downloadBtn = document.getElementById('download-btn');
+                const deleteBtn = document.getElementById('delete-favorites-btn');
                 
                 count.textContent = `${this.favorites.size} files`;
                 downloadBtn.disabled = this.favorites.size === 0;
+                if (deleteBtn) {
+                    deleteBtn.disabled = this.favorites.size === 0;
+                }
                 
                 // Clear existing list
                 list.innerHTML = '';
@@ -1625,6 +1942,23 @@
                     this.updateFavoritesPanel();
                 } else {
                     panel.classList.remove('show');
+                }
+            }
+
+            showDeleteFavoritesModal() {
+                if (this.favorites.size === 0) {
+                    return;
+                }
+                const modal = document.getElementById('delete-favorites-modal');
+                if (modal) {
+                    modal.classList.add('show');
+                }
+            }
+
+            hideDeleteFavoritesModal() {
+                const modal = document.getElementById('delete-favorites-modal');
+                if (modal) {
+                    modal.classList.remove('show');
                 }
             }
 
@@ -1674,6 +2008,58 @@
                 }
             }
 
+            async confirmDeleteFavorites() {
+                if (this.favorites.size === 0) {
+                    this.hideDeleteFavoritesModal();
+                    return;
+                }
+
+                const deleteBtn = document.getElementById('delete-favorites-btn');
+                const originalText = deleteBtn.textContent;
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = '🗑️ Deleting...';
+
+                try {
+                    const response = await fetch('/api/delete-favorites', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            files: Array.from(this.favorites)
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        const message = errorData.error || response.statusText;
+                        throw new Error(message);
+                    }
+
+                    const result = await response.json();
+
+                    if (Array.isArray(result.deleted_paths)) {
+                        result.deleted_paths.forEach((relPath) => {
+                            this.favorites.delete(relPath);
+                        });
+                    }
+
+                    this.updateFavoritesPanel();
+                    await this.loadDirectory(this.currentPath);
+
+                    if (result.message) {
+                        alert(result.message);
+                    }
+                } catch (error) {
+                    console.error('Delete favorites error:', error);
+                    alert(`Delete failed: ${error.message}`);
+                } finally {
+                    this.hideDeleteFavoritesModal();
+                    deleteBtn.disabled = this.favorites.size === 0;
+                    deleteBtn.textContent = originalText;
+                }
+            }
+
 
 
 
@@ -1705,6 +2091,12 @@
                     this.navigateToPath(path);
                 } else if (this.isVideoFile(path)) {
                     this.lastViewedFile = path; // Track last viewed file
+                    // Build list of videos in current directory and current index
+                    this.currentVideoList = this.directoryContents
+                        .filter(item => this.isVideoFile(item.path))
+                        .map(item => item.path);
+                    this.currentVideoIndex = this.currentVideoList.indexOf(path);
+                    this.currentVideoPath = path;
                     this.playVideo(path);
                 } else if (this.isImageFile(path)) {
                     this.lastViewedFile = path; // Track last viewed file
@@ -1725,88 +2117,228 @@
                 return videoExtensions.some(ext => lowerPath.endsWith(ext));
             }
 
-            playVideo(path) {
+            playVideo(path, startPlaying = false) {
+                this.currentVideoPath = path;
+                this._videoStartPlaying = startPlaying;
                 const fileName = path.split('/').pop();
                 const videoUrl = `${this.apiBase}/video?path=${encodeURIComponent(path)}`;
-                
-                // Create a modal to display the video
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.9);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000;
-                `;
-                
-                const videoContainer = document.createElement('div');
-                videoContainer.style.cssText = `
-                    max-width: 90%;
-                    max-height: 90%;
-                    position: relative;
-                `;
-                
-                const video = document.createElement('video');
-                video.controls = true;
-                video.autoplay = false;
-                video.style.cssText = `
-                    width: 100%;
-                    height: auto;
-                    max-height: 80vh;
-                `;
-                video.src = videoUrl;
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = '✕';
-                closeBtn.style.cssText = `
-                    position: absolute;
-                    top: -40px;
-                    right: 0;
-                    background: #667eea;
-                    color: white;
-                    border: none;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 16px;
-                `;
-                closeBtn.onclick = () => {
-                    document.body.removeChild(modal);
-                    // Select the video file in the file list when exiting
-                    this.selectFileInList(path);
-                };
-                
-                const title = document.createElement('div');
-                title.textContent = fileName;
-                title.style.cssText = `
-                    color: white;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 18px;
-                    font-weight: bold;
-                `;
-                
-                videoContainer.appendChild(title);
-                videoContainer.appendChild(video);
-                videoContainer.appendChild(closeBtn);
-                modal.appendChild(videoContainer);
-                document.body.appendChild(modal);
-                
-                // Close modal on escape key
-                const handleEscape = (e) => {
-                    if (e.key === 'Escape') {
-                        document.body.removeChild(modal);
-                        document.removeEventListener('keydown', handleEscape);
-                        // Select the video file in the file list when exiting
-                        this.selectFileInList(path);
+
+                let modal = document.getElementById('video-modal');
+                let video;
+                let title;
+                let favoriteIndicator;
+
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.className = 'video-modal';
+                    modal.id = 'video-modal';
+
+                    const exitZone = document.createElement('div');
+                    exitZone.className = 'video-modal-exit-zone';
+                    const exitIndicator = document.createElement('div');
+                    exitIndicator.className = 'exit-indicator';
+                    exitIndicator.textContent = 'Click to exit';
+                    exitZone.appendChild(exitIndicator);
+                    exitZone.onclick = () => this.closeVideoModal();
+
+                    const content = document.createElement('div');
+                    content.className = 'video-modal-content';
+                    title = document.createElement('div');
+                    title.className = 'video-modal-title';
+                    content.appendChild(title);
+
+                    video = document.createElement('video');
+                    video.controls = true;
+                    video.autoplay = false;
+                    const togglePlayPause = () => {
+                        if (!video) return;
+                        if (video.paused) {
+                            video.play();
+                        } else {
+                            video.pause();
+                        }
+                    };
+                    video.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        togglePlayPause();
+                    });
+                    content.appendChild(video);
+
+                    const topSpacer = document.createElement('div');
+                    topSpacer.className = 'video-modal-spacer';
+                    const centerWrapper = document.createElement('div');
+                    centerWrapper.className = 'video-modal-center';
+                    centerWrapper.appendChild(content);
+
+                    const DOUBLE_TAP_MS = 400;
+                    const DOUBLE_TAP_PX = 50;
+                    let leftLastTap = { time: 0, x: 0, y: 0 };
+                    let leftSingleTimeout = null;
+                    const leftNav = document.createElement('div');
+                    leftNav.className = 'video-modal-nav-area video-modal-nav-left';
+                    leftNav.onclick = (e) => {
+                        e.stopPropagation();
+                        const now = Date.now();
+                        const x = e.clientX;
+                        const y = e.clientY;
+                        const isDoubleTap = (now - leftLastTap.time) < DOUBLE_TAP_MS &&
+                            Math.abs(x - leftLastTap.x) < DOUBLE_TAP_PX &&
+                            Math.abs(y - leftLastTap.y) < DOUBLE_TAP_PX;
+                        if (isDoubleTap && leftSingleTimeout) {
+                            clearTimeout(leftSingleTimeout);
+                            leftSingleTimeout = null;
+                            leftLastTap = { time: 0, x: 0, y: 0 };
+                            this.playPreviousVideo(true);
+                            return;
+                        }
+                        leftLastTap = { time: now, x, y };
+                        leftSingleTimeout = setTimeout(() => {
+                            leftSingleTimeout = null;
+                            if (!video || video.paused || isNaN(video.duration)) {
+                                this.playPreviousVideo();
+                            } else {
+                                video.currentTime = Math.max(0, video.currentTime - 10);
+                            }
+                        }, DOUBLE_TAP_MS);
+                    };
+
+                    let rightLastTap = { time: 0, x: 0, y: 0 };
+                    let rightSingleTimeout = null;
+                    const rightNav = document.createElement('div');
+                    rightNav.className = 'video-modal-nav-area video-modal-nav-right';
+                    rightNav.onclick = (e) => {
+                        e.stopPropagation();
+                        const now = Date.now();
+                        const x = e.clientX;
+                        const y = e.clientY;
+                        const isDoubleTap = (now - rightLastTap.time) < DOUBLE_TAP_MS &&
+                            Math.abs(x - rightLastTap.x) < DOUBLE_TAP_PX &&
+                            Math.abs(y - rightLastTap.y) < DOUBLE_TAP_PX;
+                        if (isDoubleTap && rightSingleTimeout) {
+                            clearTimeout(rightSingleTimeout);
+                            rightSingleTimeout = null;
+                            rightLastTap = { time: 0, x: 0, y: 0 };
+                            this.playNextVideo(true);
+                            return;
+                        }
+                        rightLastTap = { time: now, x, y };
+                        rightSingleTimeout = setTimeout(() => {
+                            rightSingleTimeout = null;
+                            if (!video || video.paused || isNaN(video.duration)) {
+                                this.playNextVideo();
+                            } else {
+                                const target = video.currentTime + 10;
+                                const maxTime = isNaN(video.duration) ? target : video.duration;
+                                video.currentTime = Math.min(maxTime, target);
+                            }
+                        }, DOUBLE_TAP_MS);
+                    };
+
+                    const bottomBar = document.createElement('div');
+                    bottomBar.className = 'video-modal-bottom-bar';
+                    const favoriteZone = document.createElement('div');
+                    favoriteZone.className = 'video-modal-favorite-zone';
+                    favoriteIndicator = document.createElement('div');
+                    favoriteIndicator.className = 'favorite-indicator';
+                    favoriteZone.appendChild(favoriteIndicator);
+                    favoriteZone.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.currentVideoPath) {
+                            this.toggleFavoriteForPath(this.currentVideoPath, favoriteIndicator);
+                        }
+                    };
+                    bottomBar.appendChild(favoriteZone);
+
+                    const SWIPE_THRESHOLD = 50;
+                    let swipeStartX = 0;
+                    let swipeStartY = 0;
+                    modal.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 1) {
+                            swipeStartX = e.touches[0].clientX;
+                            swipeStartY = e.touches[0].clientY;
+                        }
+                    }, { passive: true });
+                    modal.addEventListener('touchend', (e) => {
+                        if (e.changedTouches.length !== 1) return;
+                        const deltaX = e.changedTouches[0].clientX - swipeStartX;
+                        const deltaY = e.changedTouches[0].clientY - swipeStartY;
+                        if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)) {
+                            const v = modal.querySelector('video');
+                            if (deltaX < 0) {
+                                this.playNextVideo(v && !v.paused);
+                            } else {
+                                this.playPreviousVideo(v && !v.paused);
+                            }
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }, { passive: false });
+
+                    modal.appendChild(exitZone);
+                    modal.appendChild(leftNav);
+                    modal.appendChild(rightNav);
+                    modal.appendChild(topSpacer);
+                    modal.appendChild(centerWrapper);
+                    modal.appendChild(bottomBar);
+                    document.body.appendChild(modal);
+                } else {
+                    video = modal.querySelector('video');
+                    title = modal.querySelector('.video-modal-title');
+                    favoriteIndicator = modal.querySelector('.favorite-indicator');
+                }
+
+                if (title) {
+                    const fileInfo = this.directoryContents.find(item => item.path === path);
+                    const modified = fileInfo && fileInfo.modified
+                        ? new Date(fileInfo.modified).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })
+                        : '';
+                    title.textContent = modified ? `${fileName} — ${modified}` : fileName;
+                }
+                if (video) {
+                    video.style.opacity = '0';
+                    video.pause();
+                    video.src = videoUrl;
+                    video.load();
+                    const showVideo = () => {
+                        video.style.opacity = '1';
+                    };
+                    video.addEventListener('canplay', showVideo, { once: true });
+                    video.addEventListener('error', showVideo, { once: true });
+                    if (this._videoStartPlaying) {
+                        video.addEventListener('canplay', () => {
+                            video.play();
+                        }, { once: true });
+                        this._videoStartPlaying = false;
                     }
-                };
-                document.addEventListener('keydown', handleEscape);
+                }
+                if (favoriteIndicator) {
+                    this.updateVideoFavoriteIndicator(favoriteIndicator, path);
+                }
+            }
+
+            playPreviousVideo(startPlaying = false) {
+                if (!this.currentVideoList || this.currentVideoList.length === 0) {
+                    return;
+                }
+                if (this.currentVideoIndex <= 0) {
+                    return;
+                }
+                this.currentVideoIndex -= 1;
+                const nextPath = this.currentVideoList[this.currentVideoIndex];
+                this.playVideo(nextPath, startPlaying);
+            }
+
+            playNextVideo(startPlaying = false) {
+                if (!this.currentVideoList || this.currentVideoList.length === 0) {
+                    return;
+                }
+                if (this.currentVideoIndex >= this.currentVideoList.length - 1) {
+                    return;
+                }
+                this.currentVideoIndex += 1;
+                const nextPath = this.currentVideoList[this.currentVideoIndex];
+                this.playVideo(nextPath, startPlaying);
             }
 
             navigateToPath(path) {
@@ -2084,9 +2616,55 @@
             
             // Initial sort button states will be set when first directory loads
             
-            // Add keyboard navigation for slideshow and general navigation
+            // Add keyboard navigation for slideshow, video modal, and general navigation (capture so we run before video's native Space handling)
             document.addEventListener('keydown', (event) => {
-                if (document.getElementById('slideshow-modal').style.display === 'block') {
+                const videoModal = document.getElementById('video-modal');
+                if (videoModal && document.body.contains(videoModal)) {
+                    const video = videoModal.querySelector('video');
+                    switch (event.key) {
+                        case 'ArrowLeft':
+                            event.preventDefault();
+                            if (!video || video.paused || isNaN(video.duration)) {
+                                browser.playPreviousVideo();
+                            } else {
+                                video.currentTime = Math.max(0, video.currentTime - 10);
+                            }
+                            break;
+                        case 'ArrowRight':
+                            event.preventDefault();
+                            if (!video || video.paused || isNaN(video.duration)) {
+                                browser.playNextVideo();
+                            } else {
+                                const target = video.currentTime + 10;
+                                const maxTime = isNaN(video.duration) ? target : video.duration;
+                                video.currentTime = Math.min(maxTime, target);
+                            }
+                            break;
+                        case 'Escape':
+                        case 'Backspace':
+                            event.preventDefault();
+                            browser.closeVideoModal();
+                            break;
+                        case ' ':
+                            if (video) {
+                                event.preventDefault();
+                                if (video.paused) {
+                                    video.play();
+                                } else {
+                                    video.pause();
+                                }
+                            }
+                            break;
+                        case 'n':
+                            event.preventDefault();
+                            browser.playNextVideo(video && !video.paused);
+                            break;
+                        case 'p':
+                            event.preventDefault();
+                            browser.playPreviousVideo(video && !video.paused);
+                            break;
+                    }
+                } else if (document.getElementById('slideshow-modal').style.display === 'block') {
                     switch(event.key) {
                         case 'ArrowLeft':
                             browser.previousImage();
@@ -2115,7 +2693,7 @@
                             break;
                     }
                 }
-            });
+            }, true);
         });
 
         // Global functions for onclick handlers
