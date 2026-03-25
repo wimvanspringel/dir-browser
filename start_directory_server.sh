@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 # Start the server
 echo "🌐 Starting server on http://localhost:5000"
-echo "📁 Root directory: /mnt/nassys (or as configured in config.ini)"
+echo "📁 Root directory: configured via config.ini [Media] media_dir (default /mnt/nasdata)"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""

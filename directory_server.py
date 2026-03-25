@@ -51,21 +51,23 @@ try:
 except Exception as e:
     logger.warning(f"Could not read config.ini: {e}")
 
-# Configure logging based on config.ini
-if 'Logging' in config:
-    log_level = config.get('Logging', 'level', fallback='INFO')
-    # Update the logging level if specified in config
-    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
-    logging.getLogger().setLevel(numeric_level)
+# Configure logging from environment variables (fallback to safe defaults)
+# Env var names:
+# - DIR_BROWSER_LOG_LEVEL: e.g. CRITICAL, ERROR, WARNING, INFO, DEBUG
+# - DIR_BROWSER_FLASK_DEBUG: e.g. true/false, 1/0, yes/no
+log_level = os.environ.get('DIR_BROWSER_LOG_LEVEL', 'CRITICAL')
+numeric_level = getattr(logging, log_level.upper(), logging.CRITICAL)
+logging.getLogger().setLevel(numeric_level)
 logger.info(f"Logging set to {log_level} level")
 
-# Get flask debug setting from config.ini
-flask_debug_mode = config.get('Logging', 'flaskdebug', fallback='False').lower() in ('True', 'true', '1', 'yes', 'on')
+flask_debug_mode = str(os.environ.get('DIR_BROWSER_FLASK_DEBUG', 'False')).lower() in (
+    'true', '1', 'yes', 'on'
+)
 logger.info(f"Flask debug mode: {flask_debug_mode}")
 
 # Set directory to serve from config.ini, if not set, stop the server
-if 'Scrape' in config and 'media_dir' in config['Scrape']:
-    directory_toserve = config['Scrape']['media_dir']
+if 'Media' in config and 'media_dir' in config['Media']:
+    directory_toserve = config['Media']['media_dir']
     logger.info(f"Using media directory from config.ini: {directory_toserve}")
     if not os.path.exists(directory_toserve):
         logger.error(f"Media directory does not exist: {directory_toserve}")
@@ -80,7 +82,7 @@ CORS(app)  # Enable CORS for all routes
 # Suppress Werkzeug request logs
 import logging
 werkzeug_logger = logging.getLogger('werkzeug')
-werkzeug_logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+werkzeug_logger.setLevel(getattr(logging, log_level.upper(), logging.CRITICAL))
 
 # Performance monitoring
 request_times = {}

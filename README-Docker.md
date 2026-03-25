@@ -42,17 +42,17 @@ webscraping/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DEFAULT_ROOT_PATH` | `/mnt/nassys` | Root directory to browse |
-| `FLASK_ENV` | `production` | Flask environment |
-| `FLASK_DEBUG` | `0` | Debug mode (0=off, 1=on) |
+| `MEDIA_DIR` | `/share/data` | Host directory bind-mounted into the container as `/mnt/nasdata` (read-only) |
+| `DIR_BROWSER_LOG_LEVEL` | `CRITICAL` | Python logging level (CRITICAL, ERROR, WARNING, INFO, DEBUG) |
+| `DIR_BROWSER_FLASK_DEBUG` | `False` | Flask debug mode (true/false) |
 
 ### **Volume Mounts**
 
 | Host Path | Container Path | Purpose |
 |-----------|---------------|---------|
-| `/mnt/nassys` | `/mnt/nassys` | Directory to browse (read-only) |
+| `${MEDIA_DIR:-/share/data}` | `/mnt/nasdata` | Directory to browse (read-only) |
 | `./logs` | `/app/logs` | Application logs |
-| `./config.ini` | `/app/config.ini` | Configuration file (optional) |
+| `./config.ini` | `/app/config.ini` | REQUIRED: must include `[Media] media_dir` pointing at the container path you want |
 
 ## 🚀 **Usage Commands**
 
@@ -160,10 +160,10 @@ services:
 **1. Permission Denied**
 ```bash
 # Check volume permissions
-ls -la /mnt/nassys
+ls -la /mnt/nasdata
 
 # Fix permissions if needed
-sudo chmod 755 /mnt/nassys
+sudo chmod 755 /mnt/nasdata
 ```
 
 **2. Port Already in Use**
@@ -231,7 +231,7 @@ sudo nano /etc/logrotate.d/directory-server
 ### **Custom Configuration**
 Create `config.ini`:
 ```ini
-[Scrape]
+[Media]
 media_dir = /path/to/your/media
 ```
 
