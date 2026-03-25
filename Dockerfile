@@ -3,6 +3,9 @@ FROM python:3.9-slim
 # Set working directory
 WORKDIR /app
 
+# Line-buffer stdout/stderr so `docker logs` shows output immediately
+ENV PYTHONUNBUFFERED=1
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \

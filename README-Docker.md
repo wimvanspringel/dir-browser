@@ -44,8 +44,8 @@ webscraping/
 |----------|---------|-------------|
 | `OUTGOING_PORT` | `5000` | Host port mapped to the app (compose: `${OUTGOING_PORT:-5000}:5000`; container still listens on 5000) |
 | `MEDIA_DIR` | `/share/data` | Host directory bind-mounted into the container as `/mnt/nasdata` (read-only) |
-| `DIR_BROWSER_LOG_LEVEL` | `CRITICAL` | Python logging level (CRITICAL, ERROR, WARNING, INFO, DEBUG) |
-| `DIR_BROWSER_FLASK_DEBUG` | `False` | Flask debug mode (true/false) |
+| `DIR_BROWSER_LOG_LEVEL` | `CRITICAL` | Python logging level. `CRITICAL` hides almost all log lines (only fatal startup/errors use `critical`). Use `INFO` or `DEBUG` when troubleshooting. |
+| `DIR_BROWSER_FLASK_DEBUG` | `False` | Flask debug mode (true/false). The app runs with **reloader disabled** so Docker does not exit with code 0 when debug is on. |
 
 ### **Volume Mounts**
 
@@ -183,6 +183,13 @@ docker-compose logs directory-server
 # Check health status
 docker-compose ps
 ```
+
+**4. Exit code 1 and little or nothing in Logs**
+
+- In Portainer, clear any **log filter** (empty filter can hide lines).
+- Ensure you **rebuilt the image** after code changes (`docker compose build --no-cache`).
+- On the host: `docker logs --tail 200 <container_name>` — startup messages go to **stdout**; fatals print `FATAL:` to stdout and stderr.
+- Set `DIR_BROWSER_LOG_LEVEL=INFO` temporarily so normal `logger` lines appear (default `CRITICAL` hides most of them).
 
 ### **Debug Commands**
 ```bash

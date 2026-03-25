@@ -6,13 +6,18 @@ Provides REST API endpoints to browse directory contents on the server
 
 import os
 import sys
+import time
+from datetime import datetime, timezone
+
+# Earliest possible line after stdlib — always visible in `docker logs` (UTC ISO-8601)
+print(f"[{datetime.now(timezone.utc).isoformat()}] directory_server: process start", flush=True)
+
+import traceback
 import json
 import stat
-import time
 import threading
 import zipfile
 import tempfile
-from datetime import datetime
 from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
 import logging
@@ -28,11 +33,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def _startup_fatal(message: str) -> None:
+    """Always visible: some log levels hide most lines; Docker should capture stdout and stderr."""
+    text = f"FATAL: {message}"
+    print(text, flush=True)
+    print(text, file=sys.stderr, flush=True)
+    logger.critical(message)
+    sys.exit(1)
+
+
 # Get configuration from config.ini if available
 import configparser
+config = configparser.ConfigParser()
 try:
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read("config.ini")
 except Exception as e:
     logger.warning(f"Could not read config.ini: {e}")
 
@@ -55,11 +70,9 @@ if 'Media' in config and 'media_dir' in config['Media']:
     directory_toserve = config['Media']['media_dir']
     logger.info(f"Using media directory from config.ini: {directory_toserve}")
     if not os.path.exists(directory_toserve):
-        logger.error(f"Media directory does not exist: {directory_toserve}")
-        sys.exit(1)
+        _startup_fatal(f"Media directory does not exist: {directory_toserve}")
 else:
-    logger.error("No media directory set in config.ini")
-    sys.exit(1)
+    _startup_fatal("No media directory set in config.ini (need [Media] media_dir in config.ini)")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -665,20 +678,30 @@ def not_found(error):
 def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # Set server start time for monitoring
     app.start_time = time.time()
-    
+
     logger.info(f"Starting directory server with root path: {directory_toserve}")
     logger.info("Debug endpoints available:")
     logger.info("  - GET /api/health - Server health check")
     logger.info("  - GET /api/debug/requests - Show active requests")
-    
+
     try:
-        app.run(host='0.0.0.0', port=5000, debug=flask_debug_mode, threaded=True)
+        # Never use the Werkzeug reloader in Docker: the parent exits with code 0 and PID 1
+        # stops, so the container appears "empty logs" / exited successfully.
+        app.run(
+            host="0.0.0.0",
+            port=5000,
+            debug=flask_debug_mode,
+            use_reloader=False,
+            threaded=True,
+        )
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
-        logger.error(f"Server error: {e}")
-        raise 
+        err = f"Server error: {e}"
+        logger.error(err)
+        traceback.print_exc(file=sys.stdout)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
