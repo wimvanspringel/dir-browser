@@ -20,26 +20,11 @@ import logging
 # Configuration
 directory_toserve = ""  # Set in config.ini
 
-# Set up basic logging first
-import os
-
-# Ensure logs directory exists
-os.makedirs('./logs', exist_ok=True)
-
-# Set up logging with error handling
-handlers = [logging.StreamHandler()]
-
-try:
-    # Try to add file handler
-    handlers.append(logging.FileHandler('./logs/directory_server.log'))
-except (PermissionError, OSError) as e:
-    print(f"Warning: Could not create log file: {e}")
-    print("Logging to console only.")
-
+# Logging: stdout only (Docker / Portainer capture this via `docker logs`)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=handlers
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 

@@ -12,8 +12,6 @@ services:
     volumes:
       # Mount the directory you want to browse
       - ${MEDIA_DIR:-/share/data}:/mnt/nasdata:ro
-      # Mount logs directory for persistence
-      - ./logs:/app/logs
       # Optional: mount config file if you have one
       - ./config.ini:/app/config.ini:ro
     restart: unless-stopped
@@ -46,7 +44,3 @@ services:
 networks:
   directory-network:
     driver: bridge
-
-volumes:
-  logs:
-    driver: local 

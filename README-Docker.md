@@ -52,7 +52,6 @@ webscraping/
 | Host Path | Container Path | Purpose |
 |-----------|---------------|---------|
 | `${MEDIA_DIR:-/share/data}` | `/mnt/nasdata` | Directory to browse (read-only) |
-| `./logs` | `/app/logs` | Application logs |
 | `./config.ini` | `/app/config.ini` | REQUIRED: must include `[Media] media_dir` pointing at the container path you want |
 
 ## 🚀 **Usage Commands**
@@ -65,7 +64,7 @@ docker-compose up
 # Start in background
 docker-compose up -d
 
-# View logs
+# View logs (app writes to stdout; Docker captures this)
 docker-compose logs -f directory-server
 
 # Stop services
@@ -158,7 +157,7 @@ services:
 
 ### **Common Issues**
 
-**1. Permission Denied**
+**1. Permission Denied (media mount)**
 ```bash
 # Check volume permissions
 ls -la /mnt/nasdata
@@ -209,22 +208,8 @@ docker-compose down
 docker-compose up --build -d
 ```
 
-### **Log Rotation**
-```bash
-# Create logrotate configuration
-sudo nano /etc/logrotate.d/directory-server
-
-# Add configuration
-/path/to/webscraping/logs/*.log {
-    daily
-    missingok
-    rotate 7
-    compress
-    delaycompress
-    notifempty
-    create 644 appuser appuser
-}
-```
+### **Log rotation**
+The app logs to **stdout**; Docker stores that stream (default `json-file` driver). Use `docker logs` / Portainer logs, or configure a **logging driver** / **log opts** on the service (e.g. `json-file` with `max-size` and `max-file` in `docker-compose.yml`) to cap disk use.
 
 ## 📝 **Customization**
 

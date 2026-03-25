@@ -25,8 +25,7 @@ ARG GROUP_ID=1000
 RUN groupadd -g ${GROUP_ID} appuser 2>/dev/null || true && \
     useradd -m -u ${USER_ID} -g ${GROUP_ID} appuser
 
-# Create directory for logs and set proper permissions
-RUN mkdir -p /app/logs && chown -R ${USER_ID}:${GROUP_ID} /app
+RUN chown -R ${USER_ID}:${GROUP_ID} /app
 
 USER appuser
 
