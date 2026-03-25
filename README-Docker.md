@@ -10,7 +10,7 @@ This directory contains Docker configuration files to run the directory browser 
 docker-compose up --build
 
 # Access the application
-# Open http://localhost:5000 in your browser
+# Open http://localhost:5000 in your browser (or http://localhost:<OUTGOING_PORT> if you set OUTGOING_PORT)
 ```
 
 ### **Production Setup**
@@ -42,6 +42,7 @@ webscraping/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `OUTGOING_PORT` | `5000` | Host port mapped to the app (compose: `${OUTGOING_PORT:-5000}:5000`; container still listens on 5000) |
 | `MEDIA_DIR` | `/share/data` | Host directory bind-mounted into the container as `/mnt/nasdata` (read-only) |
 | `DIR_BROWSER_LOG_LEVEL` | `CRITICAL` | Python logging level (CRITICAL, ERROR, WARNING, INFO, DEBUG) |
 | `DIR_BROWSER_FLASK_DEBUG` | `False` | Flask debug mode (true/false) |
@@ -103,7 +104,7 @@ docker-compose exec directory-server bash
 ### **Health Check Endpoint**
 ```bash
 # Check server health
-curl http://localhost:5000/api/health
+curl http://localhost:5000/api/health   # use your OUTGOING_PORT if not 5000
 
 # Check via nginx (production)
 curl http://localhost/health
@@ -112,7 +113,7 @@ curl http://localhost/health
 ### **Debug Endpoints**
 ```bash
 # View active requests
-curl http://localhost:5000/api/debug/requests
+curl http://localhost:5000/api/debug/requests   # use your OUTGOING_PORT if not 5000
 
 # Server statistics
 docker stats directory-browser
@@ -168,12 +169,11 @@ sudo chmod 755 /mnt/nasdata
 
 **2. Port Already in Use**
 ```bash
-# Check what's using port 5000
+# Check what's using your outgoing port (default 5000)
 sudo netstat -tlnp | grep :5000
 
-# Change port in docker-compose.yml
-ports:
-  - "5001:5000"  # Use port 5001 instead
+# Change the published port via environment (default 5000)
+# OUTGOING_PORT=5001 docker-compose up
 ```
 
 **3. Container Won't Start**
@@ -246,6 +246,6 @@ Modify `nginx.conf` for your specific needs:
 
 For issues or questions:
 1. Check container logs: `docker-compose logs`
-2. Verify health endpoint: `curl http://localhost:5000/api/health`
+2. Verify health endpoint: `curl http://localhost:5000/api/health` (replace `5000` with `OUTGOING_PORT` if set)
 3. Check volume mounts: `docker inspect directory-browser`
 4. Review this README for common solutions 
