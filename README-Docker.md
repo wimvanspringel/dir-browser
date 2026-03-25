@@ -43,7 +43,7 @@ webscraping/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OUTGOING_PORT` | `5000` | Host port mapped to the app (compose: `${OUTGOING_PORT:-5000}:5000`; container still listens on 5000) |
-| `MEDIA_DIR` | `/share/data` | Host directory bind-mounted into the container as `/mnt/nasdata` (read-only) |
+| `MEDIA_DIR` | `/share/data` | Host directory bind-mounted into the container as **`/mnt/data`** (fixed path in `directory_server.py`) |
 | `DIR_BROWSER_LOG_LEVEL` | `CRITICAL` | Python logging level. `CRITICAL` hides almost all log lines (only fatal startup/errors use `critical`). Use `INFO` or `DEBUG` when troubleshooting. |
 | `DIR_BROWSER_FLASK_DEBUG` | `False` | Flask debug mode (true/false). The app runs with **reloader disabled** so Docker does not exit with code 0 when debug is on. |
 
@@ -51,8 +51,7 @@ webscraping/
 
 | Host Path | Container Path | Purpose |
 |-----------|---------------|---------|
-| `${MEDIA_DIR:-/share/data}` | `/mnt/nasdata` | Directory to browse (read-only) |
-| `./config.ini` | `/app/config.ini` | REQUIRED: must include `[Media] media_dir` pointing at the container path you want |
+| `${MEDIA_DIR:-/share/data}` | `/mnt/data` | Directory to browse (read-write in compose) |
 
 ## 🚀 **Usage Commands**
 
@@ -160,10 +159,10 @@ services:
 **1. Permission Denied (media mount)**
 ```bash
 # Check volume permissions
-ls -la /mnt/nasdata
+ls -la /mnt/data
 
 # Fix permissions if needed
-sudo chmod 755 /mnt/nasdata
+sudo chmod 755 /mnt/data
 ```
 
 **2. Port Already in Use**
@@ -221,11 +220,7 @@ The app logs to **stdout**; Docker stores that stream (default `json-file` drive
 ## 📝 **Customization**
 
 ### **Custom Configuration**
-Create `config.ini`:
-```ini
-[Media]
-media_dir = /path/to/your/media
-```
+Set **`MEDIA_DIR`** in the stack environment to the host folder you want to expose; inside the container it is always mounted at **`/mnt/data`**. The app does not use a `config.ini` file.
 
 ### **Custom Nginx Configuration**
 Modify `nginx.conf` for your specific needs:

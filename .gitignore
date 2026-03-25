@@ -35,6 +35,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local-only (repo does not ship config.ini)
+config.ini
+
 # Environment variables
 .env
 .env.local

@@ -10,10 +10,8 @@ services:
     ports:
       - "${OUTGOING_PORT:-5000}:5000"
     volumes:
-      # Mount the directory you want to browse
-      - ${MEDIA_DIR:-/share/data}:/mnt/nasdata:ro
-      # Optional: mount config file if you have one
-      - ./config.ini:/app/config.ini:ro
+      # Host path (MEDIA_DIR) is mounted at /mnt/data inside the container (fixed in directory_server.py)
+      - ${MEDIA_DIR:-/share/data}:/mnt/data:rw
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]

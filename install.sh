@@ -11,4 +11,3 @@ cp Dockerfile ~/nasdocker/dir-browser/Dockerfile
 cp docker-compose.yml ~/nasdocker/dir-browser/docker-compose.yml
 cp README-Docker.md ~/nasdocker/dir-browser/README-Docker.md
 cp start_directory_server.sh ~/nasdocker/dir-browser/start_directory_server.sh
-cp config.ini ~/nasdocker/dir-browser/config.ini

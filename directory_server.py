@@ -22,8 +22,9 @@ from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
 import logging
 
-# Configuration
-directory_toserve = ""  # Set in config.ini
+# Fixed media root (bind-mount host path in docker-compose to this path inside the container)
+MEDIA_ROOT = "/mnt/data"
+directory_toserve = MEDIA_ROOT
 
 # Logging: stdout only (Docker / Portainer capture this via `docker logs`)
 logging.basicConfig(
@@ -43,14 +44,6 @@ def _startup_fatal(message: str) -> None:
     sys.exit(1)
 
 
-# Get configuration from config.ini if available
-import configparser
-config = configparser.ConfigParser()
-try:
-    config.read("config.ini")
-except Exception as e:
-    logger.warning(f"Could not read config.ini: {e}")
-
 # Configure logging from environment variables (fallback to safe defaults)
 # Env var names:
 # - DIR_BROWSER_LOG_LEVEL: e.g. CRITICAL, ERROR, WARNING, INFO, DEBUG
@@ -65,14 +58,9 @@ flask_debug_mode = str(os.environ.get('DIR_BROWSER_FLASK_DEBUG', 'False')).lower
 )
 logger.info(f"Flask debug mode: {flask_debug_mode}")
 
-# Set directory to serve from config.ini, if not set, stop the server
-if 'Media' in config and 'media_dir' in config['Media']:
-    directory_toserve = config['Media']['media_dir']
-    logger.info(f"Using media directory from config.ini: {directory_toserve}")
-    if not os.path.exists(directory_toserve):
-        _startup_fatal(f"Media directory does not exist: {directory_toserve}")
-else:
-    _startup_fatal("No media directory set in config.ini (need [Media] media_dir in config.ini)")
+logger.info(f"Using media directory: {directory_toserve}")
+if not os.path.exists(directory_toserve):
+    _startup_fatal(f"Media directory does not exist: {directory_toserve}")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes

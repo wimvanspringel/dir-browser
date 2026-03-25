@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 # Start the server
 echo "🌐 Starting server on http://localhost:5000"
-echo "📁 Root directory: configured via config.ini [Media] media_dir (default /mnt/nasdata)"
+echo "📁 Root directory: /mnt/data (create and bind-mount this path when using Docker; see docker-compose.yml)"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
