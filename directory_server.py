@@ -20,8 +20,6 @@ import zipfile
 import tempfile
 from flask import Flask, jsonify, request, send_from_directory, send_file
 from flask_cors import CORS
-import logging
-
 # Fixed media root (bind-mount host path in docker-compose to this path inside the container)
 MEDIA_ROOT = "/mnt/data"
 directory_toserve = MEDIA_ROOT
@@ -63,7 +61,22 @@ if not os.path.exists(directory_toserve):
     _startup_fatal(f"Media directory does not exist: {directory_toserve}")
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# CORS is only needed for cross-origin clients (same-origin usage, where the
+# client is served from '/', works without it). Keep it closed by default so
+# arbitrary websites cannot call state-changing endpoints from a user's browser.
+# Env var:
+# - DIR_BROWSER_ALLOWED_ORIGINS: comma-separated origin list, e.g. "https://nas.example.com"
+allowed_origins = [
+    origin.strip()
+    for origin in os.environ.get('DIR_BROWSER_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+if allowed_origins:
+    CORS(app, origins=allowed_origins)
+    logger.info(f"CORS enabled for origins: {allowed_origins}")
+else:
+    logger.info("CORS disabled (same-origin only); set DIR_BROWSER_ALLOWED_ORIGINS to allow cross-origin clients")
 
 # Suppress Werkzeug request logs
 import logging
@@ -88,18 +101,21 @@ def before_request():
     
     logger.info(f"Request started: {request.method} {request.path} from {request.remote_addr}")
 
+def _remove_request_tracking(request_id):
+    """Remove a request from the active-request tracking (idempotent)."""
+    with request_lock:
+        active_requests.discard(request_id)
+        request_times.pop(request_id, None)
+
+
 @app.after_request
 def after_request(response):
     """Log request completion time and performance metrics"""
     if hasattr(request, 'start_time'):
         duration = time.time() - request.start_time
         request_id = getattr(request, 'request_id', 'unknown')
-        
-        with request_lock:
-            if request_id in active_requests:
-                active_requests.remove(request_id)
-            if request_id in request_times:
-                del request_times[request_id]
+
+        _remove_request_tracking(request_id)
         
         logger.info(f"Request completed: {request.method} {request.path} - {response.status_code} in {duration:.3f}s")
         
@@ -109,29 +125,35 @@ def after_request(response):
     
     return response
 
+@app.teardown_request
+def teardown_request(exc):
+    """Safety net: always remove tracking, even if after_request was skipped
+    (e.g. an unhandled exception before it could run). Without this, entries
+    would leak in active_requests/request_times forever."""
+    request_id = getattr(request, 'request_id', None)
+    if request_id:
+        _remove_request_tracking(request_id)
+
 
 def get_file_info(file_path):
     """Get detailed information about a file or directory"""
     try:
-        stat_info = os.stat(file_path)
-        
-        # Get file type
-        if stat.S_ISDIR(stat_info.st_mode):
-            file_type = "directory"
-        elif stat.S_ISLNK(stat_info.st_mode):
+        # lstat does not follow symlinks, so links are reported as such
+        stat_info = os.lstat(file_path)
+
+        if stat.S_ISLNK(stat_info.st_mode):
             file_type = "symlink"
-        else:
-            file_type = "file"
-        
-        # Get file size
-        if file_type == "directory":
+            size = stat_info.st_size
+        elif stat.S_ISDIR(stat_info.st_mode):
+            file_type = "directory"
             size = None
         else:
+            file_type = "file"
             size = stat_info.st_size
-        
+
         # Get permissions
         permissions = oct(stat_info.st_mode)[-3:]
-        
+
         # Get modification time
         mtime = datetime.fromtimestamp(stat_info.st_mtime).isoformat()
         
@@ -149,12 +171,16 @@ def get_file_info(file_path):
         return None
 
 def is_safe_path(base_path, target_path):
-    """Check if the target path is within the base path (security check)"""
+    """Check if the target path resolves inside the base path (symlink-aware).
+
+    Uses realpath so symlinks pointing outside the base are rejected, and
+    commonpath so sibling dirs sharing a name prefix (e.g. /mnt/data vs
+    /mnt/data-backup) are not accepted.
+    """
     try:
-        base_path = os.path.abspath(base_path)
-        target_path = os.path.abspath(target_path)
-        return target_path.startswith(base_path)
-    except:
+        base = os.path.abspath(base_path)
+        return os.path.commonpath([base, os.path.realpath(target_path)]) == base
+    except (ValueError, OSError):
         return False
 
 @app.route('/api/directory', methods=['GET'])
@@ -507,10 +533,6 @@ def serve_video():
     except Exception as e:
         logger.error(f"Error serving video: {e}")
         return jsonify({"error": "Internal server error"}), 500
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({"error": "Endpoint not found"}), 404
 
 @app.route('/api/download-favorites', methods=['POST'])
 def download_favorites():

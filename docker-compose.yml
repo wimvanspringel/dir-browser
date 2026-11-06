@@ -12,6 +12,7 @@ services:
     environment:
       DIR_BROWSER_LOG_LEVEL: ${DIR_BROWSER_LOG_LEVEL:-CRITICAL}
       DIR_BROWSER_FLASK_DEBUG: ${DIR_BROWSER_FLASK_DEBUG:-False}
+      DIR_BROWSER_ALLOWED_ORIGINS: ${DIR_BROWSER_ALLOWED_ORIGINS:-}
     volumes:
       # Host path (MEDIA_DIR) is mounted at /mnt/data inside the container (fixed in directory_server.py)
       - ${MEDIA_DIR:-/share/data}:/mnt/data:rw
