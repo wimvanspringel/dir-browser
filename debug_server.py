@@ -3,10 +3,11 @@
 Debug script to monitor directory server health and performance
 """
 
-import requests
 import time
-import json
 from datetime import datetime
+
+import requests
+
 
 def check_server_health():
     """Check server health status"""
