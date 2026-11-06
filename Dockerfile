@@ -1,15 +1,10 @@
-FROM python:3.9-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app
 
 # Line-buffer stdout/stderr so `docker logs` shows output immediately
 ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -35,9 +30,9 @@ USER appuser
 # Expose port
 EXPOSE 5000
 
-# Health check
+# Health check (python:*.slim no longer ships curl, so use Python itself)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health', timeout=8)"]
 
 # Run the application
 CMD ["python", "directory_server.py"] 

@@ -18,7 +18,8 @@ services:
       - ${MEDIA_DIR:-/share/data}:/mnt/data:rw
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      # python slim images no longer include curl; use Python for the probe
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health', timeout=8)"]
       interval: 30s
       timeout: 10s
       retries: 3
