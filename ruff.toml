@@ -1,0 +1,14 @@
+# Ruff configuration for dir-browser
+target-version = "py311"   # Docker image is python:3.14-slim
+
+[lint]
+# Sweep-specific rules on top of ruff's default pycodestyle/pyflakes checks.
+select = ["E4", "E7", "E9", "F", "I", "UP", "EXE", "SIM", "BLE"]
+ignore = [
+    # The "process start" print must run before any imports so it always shows
+    # immediately in `docker logs` — imports deliberately sit after it.
+    "E402",
+    # Routes deliberately use broad `except Exception` handlers to convert any
+    # unexpected error into a JSON 500 response instead of crashing the worker.
+    "BLE001",
+]

@@ -6,11 +6,12 @@ Provides REST API endpoints to browse directory contents on the server
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Earliest possible line after stdlib — always visible in `docker logs` (UTC ISO-8601)
-print(f"[{datetime.now(timezone.utc).isoformat()}] directory_server: process start", flush=True)
+print(f"[{datetime.now(UTC).isoformat()}] directory_server: process start", flush=True)
 
+import contextlib
 import json
 import logging
 import stat
@@ -81,8 +82,6 @@ else:
     logger.info("CORS disabled (same-origin only); set DIR_BROWSER_ALLOWED_ORIGINS to allow cross-origin clients")
 
 # Suppress Werkzeug request logs
-import logging
-
 werkzeug_logger = logging.getLogger('werkzeug')
 werkzeug_logger.setLevel(getattr(logging, log_level.upper(), logging.CRITICAL))
 
@@ -306,7 +305,7 @@ def get_file_contents():
             }), 413
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 content = f.read()
             return jsonify({
                 "file_info": file_info,
@@ -350,17 +349,16 @@ def get_slideshow_images():
         try:
             for item in os.listdir(path):
                 item_path = os.path.join(path, item)
-                if os.path.isfile(item_path):
-                    # Check if file is an image (case insensitive)
-                    if item.lower().endswith(allowed_extensions):
-                        file_info = get_file_info(item_path)
-                        if file_info:
-                            # Convert absolute path to relative path for client
-                            if file_info['path'].startswith(directory_toserve):
-                                file_info['path'] = os.path.relpath(file_info['path'], directory_toserve)
-                                if not file_info['path'] or file_info['path'] == '.':
-                                    file_info['path'] = ''
-                            image_files.append(file_info)
+                # Check if it is a file with an image extension (case insensitive)
+                if os.path.isfile(item_path) and item.lower().endswith(allowed_extensions):
+                    file_info = get_file_info(item_path)
+                    if file_info:
+                        # Convert absolute path to relative path for client
+                        if file_info['path'].startswith(directory_toserve):
+                            file_info['path'] = os.path.relpath(file_info['path'], directory_toserve)
+                            if not file_info['path'] or file_info['path'] == '.':
+                                file_info['path'] = ''
+                        image_files.append(file_info)
         except PermissionError:
             return jsonify({"error": "Permission denied"}), 403
 
@@ -612,10 +610,8 @@ def download_favorites():
 
         finally:
             # Clean up temporary file
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(temp_path)
-            except OSError:
-                pass
 
     except Exception as e:
         logger.error(f"Error in download_favorites: {e}")
